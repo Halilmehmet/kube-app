@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-config
+  labels:
+    app: demo-complex
+data:
+  config.json: |
+    {
+      "color": "blue",
+      "mode": "production"
+    }
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: demo-secret
+  labels:
+    app: demo-complex
+type: Opaque
+data:
+  # "secret-value" base64 encoded
+  api-key: c2VjcmV0LXZhbHVl
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: demo-pvc
+  labels:
+    app: demo-complex
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+  # Removing storageClassName to let k8s choose default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-complex-app
+  labels:
+    app: demo-complex
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-complex
+  template:
+    metadata:
+      labels:
+        app: demo-complex
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-vol
+          mountPath: /etc/config
+        - name: secret-vol
+          mountPath: /etc/secret
+          readOnly: true
+        - name: data-vol
+          mountPath: /var/www/html
+      volumes:
+      - name: config-vol
+        configMap:
+          name: demo-config
+      - name: secret-vol
+        secret:
+          secretName: demo-secret
+      - name: data-vol
+        persistentVolumeClaim:
+          claimName: demo-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-complex-service
+  labels:
+    app: demo-complex
+spec:
+  type: ClusterIP
+  selector:
+    app: demo-complex
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-complex-ingress
+  labels:
+    app: demo-complex
+spec:
+  rules:
+  - host: demo.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: demo-complex-service
+            port:
+              number: 80

@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KubeViewer - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-node-html-label@1.2.2/dist/cytoscape-node-html-label.min.js"></script>
+    <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon small"></div>
+                <h2>KubeViewer</h2>
+            </div>
+
+            <div class="cluster-selector-container">
+                <label>Cluster</label>
+                <select id="clusterSelect" class="cluster-select">
+                    <!-- Clusters injected here -->
+                </select>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <div class="nav-header">Views</div>
+                    <a href="#" class="nav-item topology-nav" data-type="topology">Topology Graph</a>
+                    <a href="#" class="nav-item create-nav" data-type="create">➕ Create Resource</a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-header">Workloads</div>
+                    <a href="#" class="nav-item active" data-type="pod">Pods</a>
+                    <a href="#" class="nav-item" data-type="deployment">Deployments</a>
+                    <a href="#" class="nav-item" data-type="statefulset">StatefulSets</a>
+                    <a href="#" class="nav-item" data-type="replicaset">ReplicaSets</a>
+                    <a href="#" class="nav-item" data-type="daemonset">DaemonSets</a>
+                    <a href="#" class="nav-item" data-type="job">Jobs</a>
+                    <a href="#" class="nav-item" data-type="cronjob">CronJobs</a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-header">Storage</div>
+                    <a href="#" class="nav-item" data-type="pvc">PVCs</a>
+                    <a href="#" class="nav-item" data-type="configmap">ConfigMaps</a>
+                    <a href="#" class="nav-item" data-type="secret">Secrets</a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-header">Network</div>
+                    <a href="#" class="nav-item" data-type="service">Services</a>
+                    <a href="#" class="nav-item" data-type="ingress">Ingress</a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="breadcrumbs">
+                    <span id="crumbCluster">default</span>
+                    <span class="separator">/</span>
+                    <span id="crumbResource">Pods</span>
+                </div>
+
+                <div class="top-controls">
+                    <select id="nsSelect" class="namespace-select">
+                        <option value="all">All Namespaces</option>
+                    </select>
+                    <button id="refreshBtn" class="action-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M1 20v-6h6"></path>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-body" id="listView">
+                <div class="grid-container" id="resourceGrid">
+                    <div class="loading-state">Loading resources...</div>
+                </div>
+
+                <div class="events-section">
+                    <h3>Events</h3>
+                    <div class="events-table-container">
+                        <table class="events-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Reason</th>
+                                    <th>Object</th>
+                                    <th>Message</th>
+                                    <th>Age</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eventGrid">
+                                <tr>
+                                    <td colspan="5" class="loading-cell">Loading events...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-body hidden" id="graphView" style="padding:0; overflow:hidden;">
+                <div id="cy" style="width: 100%; height: 100%;"></div>
+            </div>
+
+            <!-- Create Resource View -->
+            <div class="content-body hidden" id="createView" style="padding:0; display: flex;">
+                <!-- Left: Form -->
+                <div class="create-form-panel">
+                    <h2>🛠️ Resource Builder</h2>
+
+                    <!-- Workload Section -->
+                    <div class="form-section">
+                        <h3>📦 Workload</h3>
+                        <div class="form-row">
+                            <label>Type</label>
+                            <select id="createWorkloadType">
+                                <option value="deployment">Deployment</option>
+                                <option value="statefulset">StatefulSet</option>
+                                <option value="daemonset">DaemonSet</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label>Name</label>
+                            <input type="text" id="createWorkloadName" placeholder="my-app"
+                                oninput="updateCreatePreview()">
+                        </div>
+                        <div class="form-row">
+                            <label>Replicas</label>
+                            <input type="number" id="createReplicas" value="1" min="1" oninput="updateCreatePreview()">
+                        </div>
+                        <div class="form-row">
+                            <label>Container Name</label>
+                            <input type="text" id="createContainerName" placeholder="main"
+                                oninput="updateCreatePreview()">
+                        </div>
+                        <div class="form-row">
+                            <label>Image</label>
+                            <input type="text" id="createImage" placeholder="nginx:latest"
+                                oninput="updateCreatePreview()">
+                        </div>
+                        <div class="form-row">
+                            <label>Container Port</label>
+                            <input type="number" id="createContainerPort" placeholder="80"
+                                oninput="updateCreatePreview()">
+                        </div>
+                    </div>
+
+                    <!-- Environment Variables Section -->
+                    <div class="form-section">
+                        <h3>🔧 Environment Variables</h3>
+                        <div id="envVarsList"></div>
+                        <button type="button" class="add-btn" onclick="addEnvVar()">+ Add Variable</button>
+                    </div>
+
+                    <!-- Resource Limits Section -->
+                    <div class="form-section">
+                        <h3><input type="checkbox" id="createResourcesEnabled" onchange="updateCreatePreview()"> 📊
+                            Resource Limits</h3>
+                        <div id="resourceLimitsFields" class="hidden">
+                            <div class="form-row">
+                                <label>CPU Request</label>
+                                <input type="text" id="createCpuRequest" placeholder="100m"
+                                    oninput="updateCreatePreview()">
+                            </div>
+                            <div class="form-row">
+                                <label>CPU Limit</label>
+                                <input type="text" id="createCpuLimit" placeholder="500m"
+                                    oninput="updateCreatePreview()">
+                            </div>
+                            <div class="form-row">
+                                <label>Memory Request</label>
+                                <input type="text" id="createMemRequest" placeholder="128Mi"
+                                    oninput="updateCreatePreview()">
+                            </div>
+                            <div class="form-row">
+                                <label>Memory Limit</label>
+                                <input type="text" id="createMemLimit" placeholder="512Mi"
+                                    oninput="updateCreatePreview()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Service Section -->
+                    <div class="form-section">
+                        <h3><input type="checkbox" id="createServiceEnabled" onchange="updateCreatePreview()"> ⚡ Service
+                        </h3>
+                        <div id="serviceFields" class="hidden">
+                            <div class="form-row">
+                                <label>Type</label>
+                                <select id="createServiceType" onchange="updateCreatePreview()">
+                                    <option value="ClusterIP">ClusterIP</option>
+                                    <option value="NodePort">NodePort</option>
+                                    <option value="LoadBalancer">LoadBalancer</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label>Port</label>
+                                <input type="number" id="createServicePort" value="80" oninput="updateCreatePreview()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ingress Section -->
+                    <div class="form-section">
+                        <h3><input type="checkbox" id="createIngressEnabled" onchange="updateCreatePreview()"> 🌐
+                            Ingress</h3>
+                        <div id="ingressFields" class="hidden">
+                            <div class="form-row">
+                                <label>Host</label>
+                                <input type="text" id="createIngressHost" placeholder="app.example.com"
+                                    oninput="updateCreatePreview()">
+                            </div>
+                            <div class="form-row">
+                                <label>Path</label>
+                                <input type="text" id="createIngressPath" value="/" oninput="updateCreatePreview()">
+                            </div>
+                            <div class="form-row">
+                                <label>Path Type</label>
+                                <select id="createIngressPathType">
+                                    <option value="Prefix">Prefix</option>
+                                    <option value="Exact">Exact</option>
+                                    <option value="ImplementationSpecific">ImplementationSpecific</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ConfigMap Section -->
+                    <div class="form-section">
+                        <h3><input type="checkbox" id="createConfigMapEnabled" onchange="updateCreatePreview()"> 📝
+                            ConfigMap</h3>
+                        <div id="configMapFields" class="hidden">
+                            <div class="form-row">
+                                <label>Usage</label>
+                                <select id="createConfigMapUsage">
+                                    <option value="mount">Mount as Volume</option>
+                                    <option value="env">Use as Env Vars</option>
+                                </select>
+                            </div>
+                            <div class="form-row" id="configMapMountRow">
+                                <label>Mount Path</label>
+                                <input type="text" id="createConfigMapPath" placeholder="/etc/config"
+                                    oninput="updateCreatePreview()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Secret Section -->
+                    <div class="form-section">
+                        <h3><input type="checkbox" id="createSecretEnabled" onchange="updateCreatePreview()"> 🔐 Secret
+                        </h3>
+                        <div id="secretFields" class="hidden">
+                            <div class="form-row">
+                                <label>Usage</label>
+                                <select id="createSecretUsage">
+                                    <option value="mount">Mount as Volume</option>
+                                    <option value="env">Use as Env Vars</option>
+                                </select>
+                            </div>
+                            <div class="form-row" id="secretMountRow">
+                                <label>Mount Path</label>
+                                <input type="text" id="createSecretPath" placeholder="/etc/secrets"
+                                    oninput="updateCreatePreview()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PVC Section -->
+                    <div class="form-section">
+                        <h3><input type="checkbox" id="createPVCEnabled" onchange="updateCreatePreview()"> 💾 PVC</h3>
+                        <div id="pvcFields" class="hidden">
+                            <div class="form-row">
+                                <label>Size</label>
+                                <input type="text" id="createPVCSize" placeholder="1Gi" oninput="updateCreatePreview()">
+                            </div>
+                            <div class="form-row">
+                                <label>Access Mode</label>
+                                <select id="createPVCAccessMode">
+                                    <option value="ReadWriteOnce">ReadWriteOnce (RWO)</option>
+                                    <option value="ReadWriteMany">ReadWriteMany (RWX)</option>
+                                    <option value="ReadOnlyMany">ReadOnlyMany (ROX)</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label>Mount Path</label>
+                                <input type="text" id="createPVCPath" placeholder="/data"
+                                    oninput="updateCreatePreview()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deploy Button -->
+                    <button class="deploy-btn" onclick="deployResources()">🚀 Deploy</button>
+                </div>
+
+                <!-- Right: Live Preview -->
+                <div class="create-preview-panel">
+                    <h3>Live Preview</h3>
+                    <div id="createPreviewCy" style="width: 100%; height: calc(100% - 40px);"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Detail Panel (Slide-out) -->
+    <div id="detailPanel" class="detail-panel hidden">
+        <div class="detail-header">
+            <h3 id="detailTitle">Resource Details</h3>
+            <button onclick="closeDetailPanel()" class="close-btn">&times;</button>
+        </div>
+        <div class="detail-actions">
+            <button id="editBtn" onclick="toggleEditMode()">✏️ Edit</button>
+            <button id="saveBtn" onclick="saveResource()" class="hidden">💾 Save</button>
+            <button id="cancelBtn" onclick="cancelEdit()" class="hidden">❌ Cancel</button>
+            <button id="expandAllBtn" onclick="expandAll()">📂 Expand All</button>
+            <button id="collapseAllBtn" onclick="collapseAll()">📁 Collapse All</button>
+        </div>
+        <div class="detail-body">
+            <div id="jsonTreeView" class="json-tree"></div>
+            <textarea id="resourceEditor" class="hidden"></textarea>
+        </div>
+    </div>
+
+    <script>
+        // Wait for all scripts to load before registering
+        window.addEventListener('DOMContentLoaded', function () {
+            if (typeof cytoscape !== 'undefined' && typeof cytoscapeDagre !== 'undefined') {
+                cytoscape.use(cytoscapeDagre);
+                console.log('Dagre extension registered successfully');
+            } else {
+                console.error('Failed to register dagre:', {
+                    cytoscape: typeof cytoscape,
+                    cytoscapeDagre: typeof cytoscapeDagre
+                });
+            }
+        });
+
+        // State
+        const state = {
+            cluster: 'default',
+            namespace: 'default',
+            resourceType: 'pod',
+            view: 'list'
+        };
+
+        // UI Elements
+        const els = {
+            clusterSelect: document.getElementById('clusterSelect'),
+            nsSelect: document.getElementById('nsSelect'),
+            resourceGrid: document.getElementById('resourceGrid'),
+            eventGrid: document.getElementById('eventGrid'),
+            refreshBtn: document.getElementById('refreshBtn'),
+            crumbCluster: document.getElementById('crumbCluster'),
+            crumbResource: document.getElementById('crumbResource'),
+            navItems: document.querySelectorAll('.nav-item'),
+            listView: document.getElementById('listView'),
+            graphView: document.getElementById('graphView')
+        };
+
+        // Initial Cytoscape instance
+        let cy = null;
+
+        // Init
+        async function init() {
+            await fetchClusters();
+            await fetchNamespaces();
+            refreshAll();
+
+            // Auto refresh DISABLED for stability
+            // setInterval(refreshAll, 5000);
+        }
+
+        function setView(mode) {
+            state.view = mode;
+            const createView = document.getElementById('createView');
+
+            if (mode === 'list') {
+                els.listView.classList.remove('hidden');
+                els.graphView.classList.add('hidden');
+                createView.classList.add('hidden');
+            } else if (mode === 'graph') {
+                els.listView.classList.add('hidden');
+                els.graphView.classList.remove('hidden');
+                createView.classList.add('hidden');
+                fetchTopology();
+            } else if (mode === 'create') {
+                els.listView.classList.add('hidden');
+                els.graphView.classList.add('hidden');
+                createView.classList.remove('hidden');
+            }
+        }
+
+        async function fetchClusters() {
+            try {
+                const res = await fetch('/api/clusters');
+                const clusters = await res.json();
+                els.clusterSelect.innerHTML = '';
+                clusters.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    els.clusterSelect.appendChild(opt);
+                });
+                state.cluster = els.clusterSelect.value;
+                updateBreadcrumbs();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function fetchNamespaces() {
+            try {
+                const res = await fetch(`/api/namespaces?cluster=${state.cluster}`);
+                const namespaces = await res.json();
+                els.nsSelect.innerHTML = '<option value="all">All Namespaces</option>';
+                namespaces.forEach(ns => {
+                    const opt = document.createElement('option');
+                    opt.value = ns;
+                    opt.textContent = ns;
+                    els.nsSelect.appendChild(opt);
+                });
+                els.nsSelect.value = state.namespace;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function fetchResources() {
+            if (state.view !== 'list') return; // Don't fetch list in graph mode
+            try {
+                let url = `/api/resources?type=${state.resourceType}&cluster=${state.cluster}`;
+                if (state.namespace !== 'all') url += `&namespace=${state.namespace}`;
+
+                const res = await fetch(url);
+                const items = await res.json();
+
+                renderResources(items);
+            } catch (e) {
+                els.resourceGrid.innerHTML = `<div class="error-state">Failed: ${e.message}</div>`;
+            }
+        }
+
+        async function fetchTopology() {
+            if (state.view !== 'graph') return;
+            try {
+                let url = `/api/topology?cluster=${state.cluster}&namespace=${state.namespace}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                renderTopology(data);
+            } catch (e) {
+                console.error("Topology fetch failed", e);
+            }
+        }
+
+        async function fetchEvents() {
+            if (state.view !== 'list') return;
+            try {
+                let url = `/api/events?cluster=${state.cluster}`;
+                if (state.namespace !== 'all') url += `&namespace=${state.namespace}`;
+
+                const res = await fetch(url);
+                const items = await res.json();
+
+                renderEvents(items);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderTopology(data) {
+            if (!data.nodes) return;
+
+            // Deduplicate edges
+            const edgeSet = new Set();
+            const uniqueEdges = data.edges.filter(e => {
+                const key = `${e.source}->${e.target}`;
+                if (edgeSet.has(key)) {
+                    return false;
+                }
+                edgeSet.add(key);
+                return true;
+            });
+
+            const elements = [
+                ...data.nodes.map(n => ({
+                    data: {
+                        id: n.id,
+                        label: n.label,
+                        type: n.type,
+                        parent: n.parent,
+                        status: n.status,
+                        age: n.age,
+                        details: n.details,
+                        namespace: n.namespace
+                    }
+                })),
+                ...uniqueEdges.map(e => ({ data: { source: e.source, target: e.target } }))
+            ];
+
+            if (cy) {
+                cy.destroy();
+            }
+
+            cy = cytoscape({
+                container: document.getElementById('cy'),
+                elements: elements,
+                style: [
+                    // ... (styles remain same)
+                    {
+                        selector: 'node',
+                        style: {
+                            'background-color': 'rgba(0,0,0,0)', // Transparent, handled by HTML
+                            'border-width': 0,
+                            'width': 180, // Match card width
+                            'height': 100
+                        }
+                    },
+                    {
+                        selector: ':parent',
+                        style: {
+                            'text-valign': 'top',
+                            'text-halign': 'center',
+                            'background-color': 'rgba(30, 41, 59, 0.4)',
+                            'border-color': '#475569',
+                            'border-width': 2,
+                            'border-style': 'dashed',
+                            'shape': 'roundrectangle',
+                            'label': function (ele) {
+                                const type = ele.data('type');
+                                const label = ele.data('label');
+                                if (type === 'deployment') return '📦 Deployment: ' + label;
+                                if (type === 'statefulset') return '🗄️ StatefulSet: ' + label;
+                                if (type === 'daemonset') return '🔄 DaemonSet: ' + label;
+                                return label;
+                            },
+                            'color': '#cbd5e1',
+                            'padding': 20
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 2,
+                            'line-color': '#64748b',
+                            'target-arrow-color': '#64748b',
+                            'target-arrow-shape': 'triangle',
+                            'curve-style': 'bezier',
+                            'arrow-scale': 1.5
+                        }
+                    }
+                ]
+            });
+
+            // Custom horizontal positioning
+            const nodeWidth = 180;
+            const nodeHeight = 100;
+            const colGap = 60;
+            const rowGap = 80;  // Reduced from 150
+            const podWidth = 180;  // Width for pods
+
+            // Group nodes by their "chain" (ingress->service->deployment->pods)
+            const ingresses = cy.nodes('[type="ingress"]');
+            const services = cy.nodes('[type="service"]');
+            const deployments = cy.nodes('[type="deployment"], [type="statefulset"]');
+            const configs = cy.nodes('[type="configmap"], [type="secret"], [type="pvc"]');
+            const standalonePods = cy.nodes('[type="pod"]').filter(n => !n.data('parent'));
+
+            let currentY = 50;
+
+            // Position each deployment chain horizontally
+            deployments.forEach((deploy, idx) => {
+                const chainY = currentY + (idx * (nodeHeight * 2 + rowGap));  // Reduced multiplier
+
+                // Find connected service
+                const connectedSvc = services.filter(svc => {
+                    return cy.edges().some(e => e.data('source') === svc.id() && e.data('target') === deploy.id());
+                });
+
+                // Find connected ingress
+                const connectedIng = ingresses.filter(ing => {
+                    return cy.edges().some(e => {
+                        const svcId = e.data('target');
+                        return e.data('source') === ing.id() && connectedSvc.some(s => s.id() === svcId);
+                    });
+                });
+
+                // Position: Ingress (x=0), Service (x=1), Deployment (x=2)
+                connectedIng.forEach(ing => ing.position({ x: 100, y: chainY + nodeHeight / 2 }));
+                connectedSvc.forEach(svc => svc.position({ x: 100 + nodeWidth + colGap, y: chainY + nodeHeight / 2 }));
+                deploy.position({ x: 100 + 2 * (nodeWidth + colGap), y: chainY + nodeHeight / 2 });
+
+                // Position child pods inside deployment box - spread them out more
+                const childPods = cy.nodes(`[parent="${deploy.id()}"]`);
+                const deployX = 100 + 2 * (nodeWidth + colGap);
+                childPods.forEach((pod, pIdx) => {
+                    pod.position({
+                        x: deployX + 60 + (pIdx * (podWidth + 20)),  // Increased spacing
+                        y: chainY + nodeHeight / 2
+                    });
+                });
+
+                // Position configs below deployment - with more spacing
+                const connectedConfigs = configs.filter(cfg => {
+                    return cy.edges().some(e => e.data('source') === deploy.id() && e.data('target') === cfg.id());
+                });
+                const configStartX = deployX - 50;
+                connectedConfigs.forEach((cfg, cIdx) => {
+                    cfg.position({
+                        x: configStartX + (cIdx * (nodeWidth + 40)),  // More horizontal spacing
+                        y: chainY + nodeHeight * 2.5  // Move further below
+                    });
+                });
+            });
+
+            // Position standalone services (like kubernetes)
+            const standaloneServices = services.filter(svc => {
+                return !cy.edges().some(e => e.data('source') === svc.id());
+            });
+            standaloneServices.forEach((svc, idx) => {
+                svc.position({ x: 100 + (idx * (nodeWidth + colGap)), y: currentY + deployments.length * (nodeHeight * 3 + rowGap) });
+            });
+
+            // Position standalone pods
+            standalonePods.forEach((pod, idx) => {
+                pod.position({ x: 300 + (idx * (nodeWidth + colGap)), y: currentY + deployments.length * (nodeHeight * 3 + rowGap) });
+            });
+
+            cy.fit(50);
+            console.log('Manual horizontal layout applied');
+
+            // Enable HTML Labels
+            cy.nodeHtmlLabel([
+                {
+                    query: 'node:childless', // Apply to all non-parent nodes
+                    cssClass: 'node-card-wrapper',
+                    tpl: function (data) {
+                        let statusClass = 'status-other';
+                        const s = (data.status || '').toLowerCase();
+                        if (s.includes('run') || s.includes('active') || s.includes('bound') || s.includes('succeed')) statusClass = 'status-running';
+                        if (s.includes('fail') || s.includes('error')) statusClass = 'status-error';
+
+                        // Icon based on type
+                        let icon = '📦';
+                        if (data.type === 'pod') icon = '🧊';
+                        if (data.type === 'service') icon = '⚡';
+                        if (data.type === 'ingress') icon = '🌐';
+                        if (data.type === 'pvc') icon = '💾';
+                        if (data.type === 'configmap' || data.type === 'secret') icon = '📝';
+
+                        // Card HTML similar to List View
+                        return `
+                            <div class="node-card">
+                                <div class="node-header">
+                                    <span class="node-type">${icon} ${data.type}</span>
+                                    <span class="status-indicator ${statusClass}">${data.status || '?'}</span>
+                                </div>
+                                <div class="node-name" title="${data.label}">${data.label}</div>
+                                <div class="node-meta">
+                                    ${data.details ? `<div>${data.details}</div>` : ''}
+                                    ${data.age ? `<div class="node-age">${data.age}</div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            ]);
+
+            // Double click - open detail panel (no zoom)
+            cy.on('dbltap', 'node', function (evt) {
+                var node = evt.target;
+                var data = node.data();
+
+                // Skip if no type (shouldn't happen)
+                if (!data.type) return;
+
+                var type = data.type;
+                var name = data.label;
+                var namespace = data.namespace || state.namespace;
+                openResourceDetail(type, name, namespace);
+            });
+        }
+
+        function renderResources(items) {
+            els.resourceGrid.innerHTML = '';
+            if (!items || items.length === 0) {
+                els.resourceGrid.innerHTML = '<div class="empty-state">No resources found.</div>';
+                return;
+            }
+
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'resource-card';
+                card.style.cursor = 'pointer';
+
+                // Click to open detail panel
+                card.addEventListener('click', () => {
+                    openResourceDetail(item.type.toLowerCase(), item.name, item.namespace);
+                });
+
+                // Simple status logic
+                let statusClass = 'status-other';
+                const s = item.status.toLowerCase();
+                if (s.includes('run') || s.includes('active') || s.includes('succeed')) statusClass = 'status-running';
+                if (s.includes('fail') || s.includes('error')) statusClass = 'status-error';
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="res-type">${item.type}</span>
+                        <span class="status-indicator ${statusClass}">${item.status}</span>
+                    </div>
+                    <h3 class="res-name" title="${item.name}">${item.name}</h3>
+                    <div class="res-meta">
+                        <div class="meta-row"><span>NS:</span> ${item.namespace}</div>
+                        <div class="meta-row"><span>Age:</span> ${item.age}</div>
+                        ${item.details ? `<div class="meta-row details"><span>Info:</span> ${item.details}</div>` : ''}
+                    </div>
+                `;
+                els.resourceGrid.appendChild(card);
+            });
+        }
+
+        function renderEvents(items) {
+            els.eventGrid.innerHTML = '';
+            if (!items || items.length === 0) {
+                els.eventGrid.innerHTML = '<tr><td colspan="5" class="empty-cell">No events found.</td></tr>';
+                return;
+            }
+            items.forEach(ev => {
+                const tr = document.createElement('tr');
+                const typeClass = ev.type === 'Warning' ? 'type-warning' : 'type-normal';
+                tr.innerHTML = `
+                    <td><span class="event-badge ${typeClass}">${ev.type}</span></td>
+                    <td>${ev.reason}</td>
+                    <td class="object-cell">${ev.object}</td>
+                    <td class="message-cell" title="${ev.message}">${ev.message}</td>
+                    <td class="age-cell">${ev.age}</td>
+                `;
+                els.eventGrid.appendChild(tr);
+            });
+        }
+
+        function refreshAll() {
+            els.refreshBtn.classList.add('rotating');
+            const promises = [fetchResources(), fetchEvents()];
+            if (state.view === 'graph') {
+                promises.push(fetchTopology());
+            }
+            Promise.all(promises)
+                .then(() => setTimeout(() => els.refreshBtn.classList.remove('rotating'), 500));
+        }
+
+        function updateBreadcrumbs() {
+            els.crumbCluster.textContent = state.cluster;
+            els.crumbResource.textContent = document.querySelector(`.nav-item[data-type="${state.resourceType}"]`).textContent;
+        }
+
+        // Listeners
+        els.navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelector('.nav-item.active')?.classList.remove('active');
+                item.classList.add('active');
+
+                const type = item.dataset.type;
+                if (type === 'topology') {
+                    setView('graph');
+                    els.crumbResource.textContent = "Topology";
+                } else if (type === 'create') {
+                    setView('create');
+                    els.crumbResource.textContent = "Create Resource";
+                    initCreatePreview();
+                } else {
+                    state.resourceType = type;
+                    setView('list');
+                    updateBreadcrumbs();
+                    refreshAll();
+                }
+            });
+        });
+
+        els.clusterSelect.addEventListener('change', (e) => {
+            state.cluster = e.target.value;
+            fetchNamespaces().then(refreshAll);
+            updateBreadcrumbs();
+        });
+
+        els.nsSelect.addEventListener('change', (e) => {
+            state.namespace = e.target.value;
+            refreshAll();
+        });
+
+        els.refreshBtn.addEventListener('click', refreshAll);
+
+        // === Detail Panel Functions ===
+        let currentResource = null;
+        let originalContent = '';
+
+        async function openResourceDetail(type, name, namespace) {
+            currentResource = { type, name, namespace };
+            const panel = document.getElementById('detailPanel');
+            const title = document.getElementById('detailTitle');
+            const treeView = document.getElementById('jsonTreeView');
+            const editor = document.getElementById('resourceEditor');
+
+            title.textContent = `${type.toUpperCase()}: ${name}`;
+            treeView.innerHTML = '<div style="color:#94a3b8;">Loading...</div>';
+            treeView.classList.remove('hidden');
+            editor.classList.add('hidden');
+
+            // Show panel
+            panel.classList.remove('hidden');
+            setTimeout(() => panel.classList.add('open'), 10);
+
+            // Reset buttons
+            document.getElementById('editBtn').classList.remove('hidden');
+            document.getElementById('saveBtn').classList.add('hidden');
+            document.getElementById('cancelBtn').classList.add('hidden');
+
+            try {
+                const res = await fetch(`/api/resource/yaml?type=${type}&name=${name}&namespace=${namespace}&cluster=${state.cluster}`);
+                if (!res.ok) throw new Error(await res.text());
+                const jsonText = await res.text();
+                const jsonData = JSON.parse(jsonText);
+                originalContent = jsonText;
+                editor.value = jsonText;
+
+                // Render JSON tree
+                treeView.innerHTML = '';
+                treeView.appendChild(renderJsonTree(jsonData, 0, true));
+            } catch (e) {
+                treeView.innerHTML = `<div style="color:#ef4444;">Error: ${e.message}</div>`;
+            }
+        }
+
+        // JSON Tree Renderer with collapsible sections
+        function renderJsonTree(data, depth = 0, expanded = true) {
+            const container = document.createElement('div');
+
+            if (data === null) {
+                container.innerHTML = '<span class="json-null">null</span>';
+                return container;
+            }
+
+            if (typeof data === 'string') {
+                container.innerHTML = `<span class="json-string">"${escapeHtml(data)}"</span>`;
+                return container;
+            }
+
+            if (typeof data === 'number') {
+                container.innerHTML = `<span class="json-number">${data}</span>`;
+                return container;
+            }
+
+            if (typeof data === 'boolean') {
+                container.innerHTML = `<span class="json-boolean">${data}</span>`;
+                return container;
+            }
+
+            if (Array.isArray(data)) {
+                const wrapper = document.createElement('div');
+                wrapper.className = data.length > 0 ? (expanded ? 'json-expanded' : 'json-collapsed') : '';
+
+                if (data.length > 0) {
+                    const toggle = document.createElement('span');
+                    toggle.className = 'json-toggle';
+                    toggle.onclick = () => wrapper.classList.toggle('json-collapsed') || wrapper.classList.toggle('json-expanded');
+                    wrapper.appendChild(toggle);
+                }
+
+                const bracket = document.createElement('span');
+                bracket.className = 'json-bracket';
+                bracket.textContent = `[ ${data.length} items ]`;
+                wrapper.appendChild(bracket);
+
+                if (data.length > 0) {
+                    const children = document.createElement('div');
+                    children.className = 'json-children';
+                    data.forEach((item, i) => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'json-item';
+                        itemDiv.appendChild(renderJsonTree(item, depth + 1, depth < 1));
+                        if (i < data.length - 1) {
+                            const comma = document.createElement('span');
+                            comma.className = 'json-bracket';
+                            comma.textContent = ',';
+                            itemDiv.appendChild(comma);
+                        }
+                        children.appendChild(itemDiv);
+                    });
+                    wrapper.appendChild(children);
+                }
+
+                return wrapper;
+            }
+
+            // Object
+            const keys = Object.keys(data);
+            const wrapper = document.createElement('div');
+
+            // Collapse managedFields and status by default at depth 1
+            const shouldCollapse = depth === 1 && ['managedFields', 'status', 'annotations'].some(k => keys.includes(k));
+            wrapper.className = keys.length > 0 ? (expanded && !shouldCollapse ? 'json-expanded' : 'json-collapsed') : '';
+
+            if (keys.length > 0) {
+                const toggle = document.createElement('span');
+                toggle.className = 'json-toggle';
+                toggle.onclick = () => wrapper.classList.toggle('json-collapsed') || wrapper.classList.toggle('json-expanded');
+                wrapper.appendChild(toggle);
+            }
+
+            const bracket = document.createElement('span');
+            bracket.className = 'json-bracket';
+            bracket.textContent = `{ ${keys.length} keys }`;
+            wrapper.appendChild(bracket);
+
+            if (keys.length > 0) {
+                const children = document.createElement('div');
+                children.className = 'json-children';
+                keys.forEach((key, i) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'json-item';
+
+                    const keySpan = document.createElement('span');
+                    keySpan.className = 'json-key';
+                    keySpan.textContent = `"${key}"`;
+                    itemDiv.appendChild(keySpan);
+
+                    const colon = document.createTextNode(': ');
+                    itemDiv.appendChild(colon);
+
+                    // Collapse certain keys by default
+                    const collapseKeys = ['managedFields', 'annotations', 'ownerReferences', 'finalizers'];
+                    const shouldCollapseChild = collapseKeys.includes(key);
+                    itemDiv.appendChild(renderJsonTree(data[key], depth + 1, !shouldCollapseChild && depth < 2));
+
+                    if (i < keys.length - 1) {
+                        const comma = document.createElement('span');
+                        comma.className = 'json-bracket';
+                        comma.textContent = ',';
+                        itemDiv.appendChild(comma);
+                    }
+                    children.appendChild(itemDiv);
+                });
+                wrapper.appendChild(children);
+            }
+
+            return wrapper;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function expandAll() {
+            document.querySelectorAll('.json-collapsed').forEach(el => {
+                el.classList.remove('json-collapsed');
+                el.classList.add('json-expanded');
+            });
+        }
+
+        function collapseAll() {
+            document.querySelectorAll('.json-expanded').forEach(el => {
+                el.classList.remove('json-expanded');
+                el.classList.add('json-collapsed');
+            });
+        }
+
+        function closeDetailPanel() {
+            const panel = document.getElementById('detailPanel');
+            panel.classList.remove('open');
+            setTimeout(() => panel.classList.add('hidden'), 300);
+            currentResource = null;
+        }
+
+        function toggleEditMode() {
+            const editor = document.getElementById('resourceEditor');
+            const treeView = document.getElementById('jsonTreeView');
+
+            // Switch from tree view to textarea editor
+            treeView.classList.add('hidden');
+            editor.classList.remove('hidden');
+            editor.readOnly = false;
+
+            // Pretty print the JSON for editing
+            try {
+                const data = JSON.parse(originalContent);
+                editor.value = JSON.stringify(data, null, 2);
+            } catch (e) {
+                editor.value = originalContent;
+            }
+
+            document.getElementById('editBtn').classList.add('hidden');
+            document.getElementById('saveBtn').classList.remove('hidden');
+            document.getElementById('cancelBtn').classList.remove('hidden');
+            document.getElementById('expandAllBtn').classList.add('hidden');
+            document.getElementById('collapseAllBtn').classList.add('hidden');
+        }
+
+        function cancelEdit() {
+            const editor = document.getElementById('resourceEditor');
+            const treeView = document.getElementById('jsonTreeView');
+
+            // Switch back to tree view
+            editor.classList.add('hidden');
+            treeView.classList.remove('hidden');
+            editor.value = originalContent;
+
+            document.getElementById('editBtn').classList.remove('hidden');
+            document.getElementById('saveBtn').classList.add('hidden');
+            document.getElementById('cancelBtn').classList.add('hidden');
+            document.getElementById('expandAllBtn').classList.remove('hidden');
+            document.getElementById('collapseAllBtn').classList.remove('hidden');
+        }
+
+        async function saveResource() {
+            const editor = document.getElementById('resourceEditor');
+            const content = editor.value;
+
+            try {
+                const res = await fetch('/api/resource/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...currentResource,
+                        content: content,
+                        cluster: state.cluster
+                    })
+                });
+                const result = await res.json();
+
+                if (result.status === 'success') {
+                    alert('Resource updated successfully!');
+                    originalContent = content;
+                    cancelEdit();
+                    refreshAll();
+                } else {
+                    alert('Update failed: ' + (result.message || 'Unknown error'));
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        // === Create Resource Preview ===
+        let createPreviewCy = null;
+
+        function initCreatePreview() {
+            if (createPreviewCy) createPreviewCy.destroy();
+
+            createPreviewCy = cytoscape({
+                container: document.getElementById('createPreviewCy'),
+                elements: [],
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'label': 'data(label)',
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'background-color': 'data(color)',
+                            'color': '#fff',
+                            'font-size': '12px',
+                            'width': 120,
+                            'height': 60,
+                            'shape': 'roundrectangle',
+                            'text-wrap': 'wrap',
+                            'text-max-width': '100px'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 2,
+                            'line-color': '#64748b',
+                            'target-arrow-color': '#64748b',
+                            'target-arrow-shape': 'triangle',
+                            'curve-style': 'bezier'
+                        }
+                    }
+                ],
+                layout: { name: 'preset' }
+            });
+
+            updateCreatePreview();
+        }
+
+        function updateCreatePreview() {
+            if (!createPreviewCy) return;
+
+            const name = document.getElementById('createWorkloadName').value || 'my-app';
+            const type = document.getElementById('createWorkloadType').value;
+            const serviceEnabled = document.getElementById('createServiceEnabled').checked;
+            const ingressEnabled = document.getElementById('createIngressEnabled').checked;
+            const configMapEnabled = document.getElementById('createConfigMapEnabled').checked;
+            const secretEnabled = document.getElementById('createSecretEnabled').checked;
+            const pvcEnabled = document.getElementById('createPVCEnabled').checked;
+            const resourcesEnabled = document.getElementById('createResourcesEnabled').checked;
+
+            // Toggle field visibility
+            document.getElementById('serviceFields').classList.toggle('hidden', !serviceEnabled);
+            document.getElementById('ingressFields').classList.toggle('hidden', !ingressEnabled);
+            document.getElementById('configMapFields').classList.toggle('hidden', !configMapEnabled);
+            document.getElementById('secretFields').classList.toggle('hidden', !secretEnabled);
+            document.getElementById('pvcFields').classList.toggle('hidden', !pvcEnabled);
+            document.getElementById('resourceLimitsFields').classList.toggle('hidden', !resourcesEnabled);
+
+            // Build elements
+            const nodes = [];
+            const edges = [];
+            let x = 300, y = 150;
+
+            // Workload node
+            const workloadId = type + '-' + name;
+            const typeIcons = { deployment: '📦', statefulset: '🗄️', daemonset: '🔄' };
+            nodes.push({
+                data: { id: workloadId, label: `${typeIcons[type]} ${type.toUpperCase()}\n${name}`, color: '#3b82f6' },
+                position: { x, y }
+            });
+
+            // Service
+            if (serviceEnabled) {
+                const svcId = 'svc-' + name;
+                nodes.push({
+                    data: { id: svcId, label: `⚡ SERVICE\n${name}-svc`, color: '#8b5cf6' },
+                    position: { x: x - 180, y }
+                });
+                edges.push({ data: { source: svcId, target: workloadId } });
+            }
+
+            // Ingress
+            if (ingressEnabled && serviceEnabled) {
+                const ingressId = 'ing-' + name;
+                const host = document.getElementById('createIngressHost').value || 'app.example.com';
+                nodes.push({
+                    data: { id: ingressId, label: `🌐 INGRESS\n${host}`, color: '#06b6d4' },
+                    position: { x: x - 360, y }
+                });
+                edges.push({ data: { source: ingressId, target: 'svc-' + name } });
+            }
+
+            // ConfigMap
+            if (configMapEnabled) {
+                const cmId = 'cm-' + name;
+                nodes.push({
+                    data: { id: cmId, label: `📝 CONFIGMAP\n${name}-config`, color: '#10b981' },
+                    position: { x: x - 100, y: y + 120 }
+                });
+                edges.push({ data: { source: workloadId, target: cmId } });
+            }
+
+            // Secret
+            if (secretEnabled) {
+                const secretId = 'secret-' + name;
+                nodes.push({
+                    data: { id: secretId, label: `🔐 SECRET\n${name}-secret`, color: '#f59e0b' },
+                    position: { x, y: y + 120 }
+                });
+                edges.push({ data: { source: workloadId, target: secretId } });
+            }
+
+            // PVC
+            if (pvcEnabled) {
+                const pvcId = 'pvc-' + name;
+                nodes.push({
+                    data: { id: pvcId, label: `💾 PVC\n${name}-pvc`, color: '#ec4899' },
+                    position: { x: x + 100, y: y + 120 }
+                });
+                edges.push({ data: { source: workloadId, target: pvcId } });
+            }
+
+            createPreviewCy.elements().remove();
+            createPreviewCy.add([...nodes, ...edges]);
+            createPreviewCy.fit(createPreviewCy.elements(), 50);
+        }
+
+        // Add Environment Variable row
+        function addEnvVar() {
+            const list = document.getElementById('envVarsList');
+            const row = document.createElement('div');
+            row.className = 'env-var-row';
+            row.innerHTML = `
+                <input type="text" placeholder="KEY" class="env-key">
+                <input type="text" placeholder="value" class="env-value">
+                <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            `;
+            list.appendChild(row);
+        }
+
+        // Get all env vars from form
+        function getEnvVars() {
+            const rows = document.querySelectorAll('.env-var-row');
+            const envVars = [];
+            rows.forEach(row => {
+                const key = row.querySelector('.env-key').value;
+                const value = row.querySelector('.env-value').value;
+                if (key) envVars.push({ name: key, value: value || '' });
+            });
+            return envVars;
+        }
+
+        async function deployResources() {
+            const name = document.getElementById('createWorkloadName').value;
+            if (!name) {
+                alert('Please enter a workload name');
+                return;
+            }
+
+            const config = {
+                type: document.getElementById('createWorkloadType').value,
+                name: name,
+                replicas: parseInt(document.getElementById('createReplicas').value) || 1,
+                containerName: document.getElementById('createContainerName').value || 'main',
+                image: document.getElementById('createImage').value || 'nginx:latest',
+                containerPort: parseInt(document.getElementById('createContainerPort').value) || 80,
+                namespace: state.namespace,
+                cluster: state.cluster,
+                envVars: getEnvVars(),
+                resources: document.getElementById('createResourcesEnabled').checked ? {
+                    cpuRequest: document.getElementById('createCpuRequest').value || '100m',
+                    cpuLimit: document.getElementById('createCpuLimit').value || '500m',
+                    memRequest: document.getElementById('createMemRequest').value || '128Mi',
+                    memLimit: document.getElementById('createMemLimit').value || '512Mi'
+                } : null,
+                service: document.getElementById('createServiceEnabled').checked ? {
+                    type: document.getElementById('createServiceType').value,
+                    port: parseInt(document.getElementById('createServicePort').value) || 80
+                } : null,
+                ingress: document.getElementById('createIngressEnabled').checked ? {
+                    host: document.getElementById('createIngressHost').value || '',
+                    path: document.getElementById('createIngressPath').value || '/',
+                    pathType: document.getElementById('createIngressPathType').value
+                } : null,
+                configMap: document.getElementById('createConfigMapEnabled').checked ? {
+                    usage: document.getElementById('createConfigMapUsage').value,
+                    mountPath: document.getElementById('createConfigMapPath').value || '/etc/config'
+                } : null,
+                secret: document.getElementById('createSecretEnabled').checked ? {
+                    usage: document.getElementById('createSecretUsage').value,
+                    mountPath: document.getElementById('createSecretPath').value || '/etc/secrets'
+                } : null,
+                pvc: document.getElementById('createPVCEnabled').checked ? {
+                    size: document.getElementById('createPVCSize').value || '1Gi',
+                    accessMode: document.getElementById('createPVCAccessMode').value,
+                    mountPath: document.getElementById('createPVCPath').value || '/data'
+                } : null
+            };
+
+            try {
+                const res = await fetch('/api/resource/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                const result = await res.json();
+
+                if (result.status === 'success') {
+                    alert('Resources deployed successfully! 🚀');
+                    // Switch to topology view
+                    document.querySelector('.topology-nav').click();
+                } else {
+                    alert('Deploy failed: ' + (result.message || 'Unknown error'));
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
