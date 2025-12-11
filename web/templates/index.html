@@ -29,6 +29,15 @@
                 <select id="clusterSelect" class="cluster-select">
                     <!-- Clusters injected here -->
                 </select>
+                <div class="cluster-upload">
+                    <h4>Connect Cluster</h4>
+                    <p>Upload a kubeconfig to quickly switch environments.</p>
+                    <input type="file" id="kubeconfigFile" accept=".yaml,.yml,.conf,.json,.txt">
+                    <input type="text" id="kubeconfigName" placeholder="Cluster name (optional)">
+                    <input type="text" id="kubeconfigContext" placeholder="Context (optional)">
+                    <button type="button" id="uploadKubeconfigBtn" class="upload-btn">Add Cluster</button>
+                    <div id="uploadStatus" class="upload-status"></div>
+                </div>
             </div>
 
             <nav class="sidebar-nav">
@@ -47,6 +56,7 @@
                     <a href="#" class="nav-item" data-type="daemonset">DaemonSets</a>
                     <a href="#" class="nav-item" data-type="job">Jobs</a>
                     <a href="#" class="nav-item" data-type="cronjob">CronJobs</a>
+                    <a href="#" class="nav-item" data-type="analysis">Maturity Analysis</a>
                 </div>
 
                 <div class="nav-group">
@@ -317,6 +327,48 @@
                     <div id="createPreviewCy" style="width: 100%; height: calc(100% - 40px);"></div>
                 </div>
             </div>
+
+            <div class="content-body hidden" id="analysisView">
+                <div class="analysis-header">
+                    <div>
+                        <h2>📊 Maturity Analysis</h2>
+                        <p>Assessment levels derived from the CNCF maturity plan (test.md).</p>
+                    </div>
+                    <div class="analysis-meta">
+                        <span>Last synced:</span>
+                        <span id="analysisUpdated" class="analysis-updated">—</span>
+                    </div>
+                </div>
+                <div id="analysisContent" class="analysis-content">
+                    <div class="loading-state">Loading maturity insights...</div>
+                </div>
+                <div class="analysis-header">
+                    <div>
+                        <h2>🧭 Cluster Insights</h2>
+                        <p>Canlı cluster sinyallerine göre mevcut durum (heuristik).</p>
+                    </div>
+                    <div class="analysis-meta">
+                        <span>Last sampled:</span>
+                        <span id="clusterAnalysisUpdated" class="analysis-updated">—</span>
+                    </div>
+                </div>
+                <div id="clusterAnalysisContent" class="analysis-content">
+                    <div class="loading-state">Cluster analysis bekleniyor...</div>
+                </div>
+                <div class="analysis-header">
+                    <div>
+                        <h2>🎯 Automated Level Guess</h2>
+                        <p>Cluster sinyallerine göre kriter başına seviye tahmini.</p>
+                    </div>
+                    <div class="analysis-meta">
+                        <span>Last scored:</span>
+                        <span id="scoreUpdated" class="analysis-updated">—</span>
+                    </div>
+                </div>
+                <div id="scoreContent" class="analysis-content">
+                    <div class="loading-state">Skor hesaplanıyor...</div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -364,6 +416,11 @@
         // UI Elements
         const els = {
             clusterSelect: document.getElementById('clusterSelect'),
+            kubeconfigFile: document.getElementById('kubeconfigFile'),
+            kubeconfigName: document.getElementById('kubeconfigName'),
+            kubeconfigContext: document.getElementById('kubeconfigContext'),
+            uploadBtn: document.getElementById('uploadKubeconfigBtn'),
+            uploadStatus: document.getElementById('uploadStatus'),
             nsSelect: document.getElementById('nsSelect'),
             resourceGrid: document.getElementById('resourceGrid'),
             eventGrid: document.getElementById('eventGrid'),
@@ -372,11 +429,41 @@
             crumbResource: document.getElementById('crumbResource'),
             navItems: document.querySelectorAll('.nav-item'),
             listView: document.getElementById('listView'),
-            graphView: document.getElementById('graphView')
+            graphView: document.getElementById('graphView'),
+            createView: document.getElementById('createView'),
+            analysisView: document.getElementById('analysisView'),
+            analysisContainer: document.getElementById('analysisContent'),
+            analysisUpdated: document.getElementById('analysisUpdated'),
+            clusterAnalysisContainer: document.getElementById('clusterAnalysisContent'),
+            clusterAnalysisUpdated: document.getElementById('clusterAnalysisUpdated'),
+            scoreContainer: document.getElementById('scoreContent'),
+            scoreUpdated: document.getElementById('scoreUpdated')
         };
 
         // Initial Cytoscape instance
         let cy = null;
+        let lastAnalysisPayload = null;
+        let lastClusterAnalysis = null;
+        let lastScore = null;
+        async function requestJSON(url, options = {}) {
+            const res = await fetch(url, options);
+            const text = await res.text();
+            let data = null;
+            if (text) {
+                try {
+                    data = JSON.parse(text);
+                } catch (err) {
+                    throw new Error(text || `Unexpected response (${res.status})`);
+                }
+            }
+            if (!res.ok) {
+                const message = data && typeof data === 'object' && data !== null && 'message' in data
+                    ? data.message
+                    : text || res.statusText;
+                throw new Error(message);
+            }
+            return data;
+        }
 
         // Init
         async function init() {
@@ -390,28 +477,33 @@
 
         function setView(mode) {
             state.view = mode;
-            const createView = document.getElementById('createView');
+
+            const hideAll = () => {
+                els.listView.classList.add('hidden');
+                els.graphView.classList.add('hidden');
+                els.createView.classList.add('hidden');
+                els.analysisView.classList.add('hidden');
+            };
 
             if (mode === 'list') {
+                hideAll();
                 els.listView.classList.remove('hidden');
-                els.graphView.classList.add('hidden');
-                createView.classList.add('hidden');
             } else if (mode === 'graph') {
-                els.listView.classList.add('hidden');
+                hideAll();
                 els.graphView.classList.remove('hidden');
-                createView.classList.add('hidden');
                 fetchTopology();
             } else if (mode === 'create') {
-                els.listView.classList.add('hidden');
-                els.graphView.classList.add('hidden');
-                createView.classList.remove('hidden');
+                hideAll();
+                els.createView.classList.remove('hidden');
+            } else if (mode === 'analysis') {
+                hideAll();
+                els.analysisView.classList.remove('hidden');
             }
         }
 
         async function fetchClusters() {
             try {
-                const res = await fetch('/api/clusters');
-                const clusters = await res.json();
+                const clusters = await requestJSON('/api/clusters');
                 els.clusterSelect.innerHTML = '';
                 clusters.forEach(c => {
                     const opt = document.createElement('option');
@@ -423,35 +515,59 @@
                 updateBreadcrumbs();
             } catch (e) {
                 console.error(e);
+                els.uploadStatus.textContent = `Cluster list failed: ${e.message}`;
+                els.uploadStatus.classList.add('error');
             }
         }
 
         async function fetchNamespaces() {
             try {
-                const res = await fetch(`/api/namespaces?cluster=${state.cluster}`);
-                const namespaces = await res.json();
-                els.nsSelect.innerHTML = '<option value="all">All Namespaces</option>';
+                const resp = await requestJSON(`/api/namespaces?cluster=${encodeURIComponent(state.cluster)}`);
+                const namespaces = resp.namespaces || [];
+                const allowAll = !!resp.allowAll;
+                const defaultNamespace = resp.defaultNamespace || namespaces[0] || (allowAll ? 'all' : '');
+
+                els.nsSelect.innerHTML = '';
+                if (allowAll) {
+                    const opt = document.createElement('option');
+                    opt.value = 'all';
+                    opt.textContent = 'All Namespaces';
+                    els.nsSelect.appendChild(opt);
+                }
+
                 namespaces.forEach(ns => {
                     const opt = document.createElement('option');
                     opt.value = ns;
                     opt.textContent = ns;
                     els.nsSelect.appendChild(opt);
                 });
-                els.nsSelect.value = state.namespace;
+
+                if (!allowAll && state.namespace === 'all') {
+                    state.namespace = defaultNamespace;
+                }
+                if (!namespaces.includes(state.namespace)) {
+                    state.namespace = defaultNamespace || namespaces[0] || (allowAll ? 'all' : '');
+                }
+                if (!state.namespace && allowAll) {
+                    state.namespace = 'all';
+                }
+
+                if (state.namespace) {
+                    els.nsSelect.value = state.namespace;
+                }
             } catch (e) {
                 console.error(e);
+                els.nsSelect.innerHTML = `<option value="all">Error loading namespaces</option>`;
             }
         }
 
         async function fetchResources() {
             if (state.view !== 'list') return; // Don't fetch list in graph mode
             try {
-                let url = `/api/resources?type=${state.resourceType}&cluster=${state.cluster}`;
-                if (state.namespace !== 'all') url += `&namespace=${state.namespace}`;
+                let url = `/api/resources?type=${encodeURIComponent(state.resourceType)}&cluster=${encodeURIComponent(state.cluster)}`;
+                if (state.namespace && state.namespace !== 'all') url += `&namespace=${encodeURIComponent(state.namespace)}`;
 
-                const res = await fetch(url);
-                const items = await res.json();
-
+                const items = await requestJSON(url);
                 renderResources(items);
             } catch (e) {
                 els.resourceGrid.innerHTML = `<div class="error-state">Failed: ${e.message}</div>`;
@@ -461,9 +577,9 @@
         async function fetchTopology() {
             if (state.view !== 'graph') return;
             try {
-                let url = `/api/topology?cluster=${state.cluster}&namespace=${state.namespace}`;
-                const res = await fetch(url);
-                const data = await res.json();
+                let url = `/api/topology?cluster=${encodeURIComponent(state.cluster)}`;
+                if (state.namespace) url += `&namespace=${encodeURIComponent(state.namespace)}`;
+                const data = await requestJSON(url);
                 renderTopology(data);
             } catch (e) {
                 console.error("Topology fetch failed", e);
@@ -473,16 +589,342 @@
         async function fetchEvents() {
             if (state.view !== 'list') return;
             try {
-                let url = `/api/events?cluster=${state.cluster}`;
-                if (state.namespace !== 'all') url += `&namespace=${state.namespace}`;
+                let url = `/api/events?cluster=${encodeURIComponent(state.cluster)}`;
+                if (state.namespace && state.namespace !== 'all') url += `&namespace=${encodeURIComponent(state.namespace)}`;
 
-                const res = await fetch(url);
-                const items = await res.json();
-
+                const items = await requestJSON(url);
                 renderEvents(items);
             } catch (e) {
                 console.error(e);
+                els.eventGrid.innerHTML = `<tr><td colspan="5" class="empty-cell">${e.message}</td></tr>`;
             }
+        }
+
+        async function fetchAnalysis() {
+            if (state.view !== 'analysis') return;
+            if (els.analysisContainer) {
+                els.analysisContainer.innerHTML = '<div class="loading-state">Loading maturity insights...</div>';
+            }
+            try {
+                const data = await requestJSON('/api/analysis');
+                lastAnalysisPayload = data;
+                renderAnalysis(data);
+            } catch (e) {
+                console.error(e);
+                if (els.analysisContainer) {
+                    els.analysisContainer.innerHTML = `<div class="error-state">Unable to load analysis: ${escapeHtml(e.message)}</div>`;
+                }
+                if (els.analysisUpdated) {
+                    els.analysisUpdated.textContent = 'Error';
+                }
+            }
+        }
+
+        async function fetchClusterAnalysis() {
+            if (state.view !== 'analysis') return;
+            if (els.clusterAnalysisContainer) {
+                els.clusterAnalysisContainer.innerHTML = '<div class="loading-state">Cluster analysis bekleniyor...</div>';
+            }
+            try {
+                const url = `/api/cluster/analysis?cluster=${encodeURIComponent(state.cluster)}`;
+                const data = await requestJSON(url);
+                lastClusterAnalysis = data;
+                renderClusterAnalysis(data);
+            } catch (e) {
+                console.error(e);
+                if (els.clusterAnalysisContainer) {
+                    els.clusterAnalysisContainer.innerHTML = `<div class="error-state">Cluster analizi alınamadı: ${escapeHtml(e.message)}</div>`;
+                }
+                if (els.clusterAnalysisUpdated) {
+                    els.clusterAnalysisUpdated.textContent = 'Error';
+                }
+            }
+        }
+
+        async function fetchScore() {
+            if (state.view !== 'analysis') return;
+            if (els.scoreContainer) {
+                els.scoreContainer.innerHTML = '<div class="loading-state">Skor hesaplanıyor...</div>';
+            }
+            try {
+                const url = `/api/cluster/score?cluster=${encodeURIComponent(state.cluster)}`;
+                const data = await requestJSON(url);
+                lastScore = data;
+                renderScore(data);
+            } catch (e) {
+                console.error(e);
+                if (els.scoreContainer) {
+                    els.scoreContainer.innerHTML = `<div class="error-state">Skor hesaplanamadı: ${escapeHtml(e.message)}</div>`;
+                }
+                if (els.scoreUpdated) {
+                    els.scoreUpdated.textContent = 'Error';
+                }
+            }
+        }
+
+        function renderAnalysis(payload) {
+            if (!els.analysisContainer) return;
+            const rows = payload && Array.isArray(payload.rows) ? payload.rows : [];
+            if (els.analysisUpdated) {
+                const ts = payload && payload.generatedAt ? formatTimestamp(payload.generatedAt) : '—';
+                els.analysisUpdated.textContent = ts;
+            }
+
+            if (rows.length === 0) {
+                els.analysisContainer.innerHTML = '<div class="empty-state">Analysis data not found.</div>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            const summaryRow = rows.find(r => (r.title || '').toLowerCase().includes('average level'));
+            const detailRows = rows;
+
+            if (summaryRow) {
+                const summaryGrid = document.createElement('div');
+                summaryGrid.className = 'analysis-summary-grid';
+                [
+                    { label: 'Prod', levelKey: 'prodLevel', targetKey: 'prodTarget' },
+                    { label: 'Staging', levelKey: 'stagingLevel', targetKey: 'stagingTarget' },
+                    { label: 'Dev', levelKey: 'devLevel', targetKey: 'devTarget' },
+                ].forEach(env => {
+                    const card = document.createElement('div');
+                    card.className = `analysis-card ${levelStatusClass(summaryRow[env.levelKey], summaryRow[env.targetKey])}`;
+                    card.innerHTML = `
+                        <div class="analysis-card-header">
+                            <span>${env.label}</span>
+                            <strong>${escapeHtml(summaryRow[env.levelKey] || '-')}</strong>
+                        </div>
+                        <div class="analysis-card-body">
+                            <div>Target: <strong>${escapeHtml(summaryRow[env.targetKey] || '-')}</strong></div>
+                            <div class="analysis-card-status">${escapeHtml(describeLevelDelta(summaryRow[env.levelKey], summaryRow[env.targetKey]))}</div>
+                        </div>
+                    `;
+                    summaryGrid.appendChild(card);
+                });
+                fragment.appendChild(summaryGrid);
+            }
+
+            const table = document.createElement('table');
+            table.className = 'analysis-table';
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Başlık</th>
+                        <th>Prod Readiness</th>
+                        <th>Staging Readiness</th>
+                        <th>Dev Readiness</th>
+                    </tr>
+                </thead>
+            `;
+            const tbody = document.createElement('tbody');
+            detailRows.forEach(row => {
+                const tr = document.createElement('tr');
+                const lowerTitle = (row.title || '').toLowerCase();
+                if (lowerTitle.includes('average level')) {
+                    tr.classList.add('analysis-row-highlight');
+                }
+                tr.innerHTML = `
+                    <td>${escapeHtml(row.title)}</td>
+                    <td>${levelCellHTML(row.prodLevel, row.prodTarget)}</td>
+                    <td>${levelCellHTML(row.stagingLevel, row.stagingTarget)}</td>
+                    <td>${levelCellHTML(row.devLevel, row.devTarget)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            fragment.appendChild(table);
+
+            const note = document.createElement('p');
+            note.className = 'analysis-note';
+            note.textContent = 'Data synced from test.md → COMPOSITE ASSESSMENT MATRIX. Update that file to refresh the heatmap.';
+            fragment.appendChild(note);
+
+            els.analysisContainer.innerHTML = '';
+            els.analysisContainer.appendChild(fragment);
+        }
+
+        function renderClusterAnalysis(payload) {
+            if (!els.clusterAnalysisContainer) return;
+            if (els.clusterAnalysisUpdated) {
+                const ts = payload && payload.generatedAt ? formatTimestamp(payload.generatedAt) : '—';
+                els.clusterAnalysisUpdated.textContent = ts;
+            }
+
+            if (!payload || typeof payload !== 'object') {
+                els.clusterAnalysisContainer.innerHTML = '<div class="empty-state">Cluster analizi yok.</div>';
+                return;
+            }
+
+            const frag = document.createDocumentFragment();
+
+            // HA + Node + Network cards
+            const topGrid = document.createElement('div');
+            topGrid.className = 'analysis-summary-grid';
+            topGrid.appendChild(buildSimpleCard('HA / Nodes', [
+                `Control-Plane: ${payload.nodes?.controlPlanes || 0}`,
+                `Zones: ${(payload.nodes?.zones || []).join(', ') || '—'}`,
+                `HA: ${payload.nodes?.ha ? 'Evet' : 'Hayır'}`,
+            ], payload.nodes?.ha ? 'level-good' : 'level-warning'));
+            topGrid.appendChild(buildSimpleCard('CNI', [
+                payload.nodes?.cni || 'Bilinmiyor'
+            ], payload.nodes?.cni ? 'level-good' : 'level-warning'));
+            topGrid.appendChild(buildSimpleCard('NetworkPolicy', [
+                `Policy sayısı: ${payload.network?.networkPolicies || 0}`,
+                `Default-deny NS: ${(payload.network?.defaultDenyNamespaces || []).join(', ') || '—'}`
+            ], (payload.network?.networkPolicies || 0) > 0 ? 'level-good' : 'level-risk'));
+            frag.appendChild(topGrid);
+
+            // Ingress + Security + Observability
+            const midGrid = document.createElement('div');
+            midGrid.className = 'analysis-summary-grid';
+            midGrid.appendChild(buildListCard('Ingress Controller', payload.network?.ingresses || [], 'level-neutral'));
+            midGrid.appendChild(buildListCard('Security', [
+                `cert-manager: ${payload.security?.certManager ? 'Var' : 'Yok'}`,
+                `PSA enforce: ${(payload.security?.psaEnforce || []).join(', ') || '—'}`
+            ], payload.security?.certManager ? 'level-good' : 'level-warning'));
+            midGrid.appendChild(buildListCard('Observability', [
+                `Prometheus: ${flagText(payload.observability?.prometheus)}`,
+                `Alertmanager: ${flagText(payload.observability?.alertmanager)}`,
+                `Grafana: ${flagText(payload.observability?.grafana)}`,
+                `kube-state-metrics: ${flagText(payload.observability?.kubeStateMetrics)}`,
+                `EFK: ${flagText(payload.observability?.efk)}`
+            ], payload.observability?.prometheus ? 'level-good' : 'level-warning'));
+            frag.appendChild(midGrid);
+
+            // GitOps + Backup + Autoscaling
+            const bottomGrid = document.createElement('div');
+            bottomGrid.className = 'analysis-summary-grid';
+            bottomGrid.appendChild(buildSimpleCard('GitOps', [
+                `ArgoCD: ${flagText(payload.gitops?.argocd)}`
+            ], payload.gitops?.argocd ? 'level-good' : 'level-warning'));
+            bottomGrid.appendChild(buildSimpleCard('Backup', [
+                `Velero: ${flagText(payload.backup?.velero)}`
+            ], payload.backup?.velero ? 'level-good' : 'level-warning'));
+            bottomGrid.appendChild(buildListCard('Autoscaling / Quota', [
+                `HPA sayısı: ${payload.workload?.hpaCount ?? payload.workload?.hpas ?? 0}`,
+                `Autoscaler: ${(payload.workload?.autoscalers || []).join(', ') || '—'}`,
+                `ResourceQuota NS: ${payload.workload?.resourceQuotaNamespaces || 0}`
+            ], (payload.workload?.hpaCount || payload.workload?.hpas || 0) > 0 ? 'level-good' : 'level-warning'));
+            frag.appendChild(bottomGrid);
+
+            if (payload.warnings && payload.warnings.length > 0) {
+                const warnBox = document.createElement('div');
+                warnBox.className = 'analysis-warning';
+                warnBox.innerHTML = `<strong>Uyarılar:</strong> ${escapeHtml(payload.warnings.join(' | '))}`;
+                frag.appendChild(warnBox);
+            }
+
+            els.clusterAnalysisContainer.innerHTML = '';
+            els.clusterAnalysisContainer.appendChild(frag);
+        }
+
+        function buildSimpleCard(title, lines, statusClass = 'level-neutral') {
+            const card = document.createElement('div');
+            card.className = `analysis-card ${statusClass}`;
+            card.innerHTML = `
+                <div class="analysis-card-header">
+                    <span>${escapeHtml(title)}</span>
+                </div>
+                <div class="analysis-card-body">
+                    ${lines.map(l => `<div>${escapeHtml(l)}</div>`).join('')}
+                </div>
+            `;
+            return card;
+        }
+
+        function buildListCard(title, lines, statusClass = 'level-neutral') {
+            return buildSimpleCard(title, Array.isArray(lines) ? lines : [], statusClass);
+        }
+
+        function flagText(val) {
+            if (val === true) return 'Var';
+            if (val === false) return 'Yok';
+            return 'Bilinmiyor';
+        }
+        function renderScore(data) {
+            if (!els.scoreContainer) return;
+            if (els.scoreUpdated) {
+                const ts = data && data.generatedAt ? formatTimestamp(data.generatedAt) : '—';
+                els.scoreUpdated.textContent = ts;
+            }
+            const scores = (data && Array.isArray(data.scores)) ? data.scores : [];
+            if (scores.length === 0) {
+                els.scoreContainer.innerHTML = '<div class="empty-state">Skor verisi yok.</div>';
+                return;
+            }
+            const wrap = document.createElement('div');
+            wrap.className = 'score-grid';
+            scores.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `analysis-card ${levelClass(item.level)}`;
+                card.innerHTML = `
+                    <div class="analysis-card-header">
+                        <span>${escapeHtml(item.category || '')}</span>
+                        <strong>${escapeHtml(item.level || '-')}</strong>
+                    </div>
+                    <div class="analysis-card-body">
+                        <div>${escapeHtml(item.rationale || '')}</div>
+                        ${Array.isArray(item.missing) && item.missing.length > 0 ? `<div class="missing-list">${item.missing.map(m => `• ${escapeHtml(m)}`).join('<br>')}</div>` : ''}
+                    </div>
+                `;
+                wrap.appendChild(card);
+            });
+            if (data.warnings && data.warnings.length > 0) {
+                const warnBox = document.createElement('div');
+                warnBox.className = 'analysis-warning';
+                warnBox.innerHTML = `<strong>Uyarılar:</strong> ${escapeHtml(data.warnings.join(' | '))}`;
+                wrap.appendChild(warnBox);
+            }
+            els.scoreContainer.innerHTML = '';
+            els.scoreContainer.appendChild(wrap);
+        }
+
+        function levelClass(level) {
+            const v = (level || '').toUpperCase();
+            if (v === 'L4' || v === 'L5') return 'level-good';
+            if (v === 'L3') return 'level-warning';
+            return 'level-risk';
+        }
+
+        function levelCellHTML(current, target) {
+            return `
+                <div class="level-cell ${levelStatusClass(current, target)}">
+                    <div class="level-current">${escapeHtml(current || '-')}</div>
+                    <div class="level-target">Target ${escapeHtml(target || '-')}</div>
+                    <div class="level-gap">${escapeHtml(describeLevelDelta(current, target))}</div>
+                </div>
+            `;
+        }
+
+        function levelStatusClass(current, target) {
+            const currentVal = levelToNumber(current);
+            const targetVal = levelToNumber(target);
+            if (currentVal === null || targetVal === null) return 'level-neutral';
+            if (currentVal >= targetVal) return 'level-good';
+            if (targetVal - currentVal === 1) return 'level-warning';
+            return 'level-risk';
+        }
+
+        function levelToNumber(val) {
+            if (!val) return null;
+            const match = val.match(/L(\d)/i);
+            return match ? parseInt(match[1], 10) : null;
+        }
+
+        function describeLevelDelta(current, target) {
+            const currentVal = levelToNumber(current);
+            const targetVal = levelToNumber(target);
+            if (currentVal === null || targetVal === null) return 'Target TBD';
+            if (currentVal >= targetVal) return 'On target';
+            const diff = targetVal - currentVal;
+            if (diff === 1) return 'Almost there';
+            return `${diff} levels behind`;
+        }
+
+        function formatTimestamp(ts) {
+            const date = new Date(ts);
+            if (Number.isNaN(date.getTime())) return ts;
+            return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
         }
 
         function renderTopology(data) {
@@ -759,6 +1201,11 @@
 
         function refreshAll() {
             els.refreshBtn.classList.add('rotating');
+            if (state.view === 'analysis') {
+                Promise.all([fetchAnalysis(), fetchClusterAnalysis(), fetchScore()])
+                    .finally(() => setTimeout(() => els.refreshBtn.classList.remove('rotating'), 500));
+                return;
+            }
             const promises = [fetchResources(), fetchEvents()];
             if (state.view === 'graph') {
                 promises.push(fetchTopology());
@@ -787,6 +1234,11 @@
                     setView('create');
                     els.crumbResource.textContent = "Create Resource";
                     initCreatePreview();
+                } else if (type === 'analysis') {
+                    state.resourceType = type;
+                    setView('analysis');
+                    els.crumbResource.textContent = item.textContent.trim();
+                    refreshAll();
                 } else {
                     state.resourceType = type;
                     setView('list');
@@ -808,6 +1260,48 @@
         });
 
         els.refreshBtn.addEventListener('click', refreshAll);
+
+        // Upload kubeconfig
+        els.uploadBtn.addEventListener('click', async () => {
+            const file = els.kubeconfigFile.files[0];
+            if (!file) {
+                els.uploadStatus.textContent = 'Please choose a kubeconfig file.';
+                els.uploadStatus.classList.remove('success');
+                els.uploadStatus.classList.add('error');
+                return;
+            }
+            els.uploadStatus.textContent = 'Uploading...';
+            els.uploadStatus.classList.remove('success', 'error');
+
+            try {
+                const fd = new FormData();
+                fd.append('kubeconfig', file);
+                const name = (els.kubeconfigName.value || '').trim();
+                const context = (els.kubeconfigContext.value || '').trim();
+                if (name) fd.append('name', name);
+                if (context) fd.append('context', context);
+
+                const res = await fetch('/api/cluster/upload', { method: 'POST', body: fd });
+                const text = await res.text();
+                if (!res.ok) throw new Error(text);
+                const data = JSON.parse(text);
+                els.uploadStatus.textContent = `Connected as "${data.name}" (context: ${data.context})`;
+                els.uploadStatus.classList.remove('error');
+                els.uploadStatus.classList.add('success');
+
+                // Refresh clusters and switch to the new one
+                await fetchClusters();
+                els.clusterSelect.value = data.name;
+                state.cluster = data.name;
+                await fetchNamespaces();
+                refreshAll();
+                updateBreadcrumbs();
+            } catch (e) {
+                els.uploadStatus.textContent = `Error: ${e.message}`;
+                els.uploadStatus.classList.remove('success');
+                els.uploadStatus.classList.add('error');
+            }
+        });
 
         // === Detail Panel Functions ===
         let currentResource = null;
@@ -835,12 +1329,26 @@
             document.getElementById('cancelBtn').classList.add('hidden');
 
             try {
-                const res = await fetch(`/api/resource/yaml?type=${type}&name=${name}&namespace=${namespace}&cluster=${state.cluster}`);
-                if (!res.ok) throw new Error(await res.text());
-                const jsonText = await res.text();
-                const jsonData = JSON.parse(jsonText);
-                originalContent = jsonText;
-                editor.value = jsonText;
+                const res = await fetch(`/api/resource/yaml?type=${encodeURIComponent(type)}&name=${encodeURIComponent(name)}&namespace=${encodeURIComponent(namespace)}&cluster=${encodeURIComponent(state.cluster)}`);
+                const payload = await res.text();
+                if (!res.ok) {
+                    let message = payload;
+                    try {
+                        const data = JSON.parse(payload);
+                        if (data && data.message) message = data.message;
+                    } catch (err) {
+                        // keep raw payload
+                    }
+                    throw new Error(message || 'Failed to fetch resource');
+                }
+                let jsonData;
+                try {
+                    jsonData = JSON.parse(payload);
+                } catch (parseErr) {
+                    throw new Error(`Invalid resource payload: ${parseErr.message}`);
+                }
+                originalContent = payload;
+                editor.value = payload;
 
                 // Render JSON tree
                 treeView.innerHTML = '';
