@@ -1,0 +1,3 @@
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+signal: terminated

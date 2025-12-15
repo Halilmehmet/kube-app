@@ -29,14 +29,30 @@
                 <select id="clusterSelect" class="cluster-select">
                     <!-- Clusters injected here -->
                 </select>
-                <div class="cluster-upload">
-                    <h4>Connect Cluster</h4>
-                    <p>Upload a kubeconfig to quickly switch environments.</p>
-                    <input type="file" id="kubeconfigFile" accept=".yaml,.yml,.conf,.json,.txt">
-                    <input type="text" id="kubeconfigName" placeholder="Cluster name (optional)">
-                    <input type="text" id="kubeconfigContext" placeholder="Context (optional)">
-                    <button type="button" id="uploadKubeconfigBtn" class="upload-btn">Add Cluster</button>
-                    <div id="uploadStatus" class="upload-status"></div>
+                <div class="cluster-upload" id="clusterUpload">
+                    <button type="button" class="cluster-upload-toggle" id="clusterUploadToggle" aria-expanded="false">
+                        <div class="cluster-upload-info">
+                            <h4>Connect Cluster</h4>
+                            <p>Upload a kubeconfig to quickly switch environments.</p>
+                        </div>
+                        <span class="cluster-upload-chevron" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M6 9l6 6 6-6"></path>
+                            </svg>
+                        </span>
+                    </button>
+                    <div class="cluster-upload-body" id="clusterUploadBody">
+                        <label for="kubeconfigFile" class="file-upload">
+                            <span class="file-upload-button">Dosya Seç</span>
+                            <span class="file-upload-name" id="kubeconfigFileName">Dosya seçilmedi</span>
+                        </label>
+                        <input type="file" id="kubeconfigFile" accept=".yaml,.yml,.conf,.json,.txt">
+                        <input type="text" id="kubeconfigName" placeholder="Cluster name (optional)">
+                        <input type="text" id="kubeconfigContext" placeholder="Context (optional)">
+                        <button type="button" id="uploadKubeconfigBtn" class="upload-btn">Add Cluster</button>
+                        <div id="uploadStatus" class="upload-status" aria-live="polite"></div>
+                    </div>
                 </div>
             </div>
 
@@ -344,6 +360,19 @@
                 </div>
                 <div class="analysis-header">
                     <div>
+                        <h2>✅ Current Cluster Maturity</h2>
+                        <p>Seçili cluster sinyallerine göre otomatik özet.</p>
+                    </div>
+                    <div class="analysis-meta">
+                        <span>Last computed:</span>
+                        <span id="maturityReportUpdated" class="analysis-updated">—</span>
+                    </div>
+                </div>
+                <div id="maturityReportContent" class="analysis-content">
+                    <div class="loading-state">Maturity report hazırlanıyor...</div>
+                </div>
+                <div class="analysis-header">
+                    <div>
                         <h2>🧭 Cluster Insights</h2>
                         <p>Canlı cluster sinyallerine göre mevcut durum (heuristik).</p>
                     </div>
@@ -415,6 +444,9 @@
 
         // UI Elements
         const els = {
+            clusterUpload: document.getElementById('clusterUpload'),
+            clusterUploadToggle: document.getElementById('clusterUploadToggle'),
+            kubeconfigFileNameLabel: document.getElementById('kubeconfigFileName'),
             clusterSelect: document.getElementById('clusterSelect'),
             kubeconfigFile: document.getElementById('kubeconfigFile'),
             kubeconfigName: document.getElementById('kubeconfigName'),
@@ -434,6 +466,8 @@
             analysisView: document.getElementById('analysisView'),
             analysisContainer: document.getElementById('analysisContent'),
             analysisUpdated: document.getElementById('analysisUpdated'),
+            maturityReportContainer: document.getElementById('maturityReportContent'),
+            maturityReportUpdated: document.getElementById('maturityReportUpdated'),
             clusterAnalysisContainer: document.getElementById('clusterAnalysisContent'),
             clusterAnalysisUpdated: document.getElementById('clusterAnalysisUpdated'),
             scoreContainer: document.getElementById('scoreContent'),
@@ -641,6 +675,26 @@
             }
         }
 
+        async function fetchMaturityReport() {
+            if (state.view !== 'analysis') return;
+            if (els.maturityReportContainer) {
+                els.maturityReportContainer.innerHTML = '<div class="loading-state">Maturity report hazırlanıyor...</div>';
+            }
+            try {
+                const url = `/api/maturity/report?cluster=${encodeURIComponent(state.cluster)}&env=prod`;
+                const data = await requestJSON(url);
+                renderMaturityReport(data);
+            } catch (e) {
+                console.error(e);
+                if (els.maturityReportContainer) {
+                    els.maturityReportContainer.innerHTML = `<div class="error-state">Maturity report alınamadı: ${escapeHtml(e.message)}</div>`;
+                }
+                if (els.maturityReportUpdated) {
+                    els.maturityReportUpdated.textContent = 'Error';
+                }
+            }
+        }
+
         async function fetchScore() {
             if (state.view !== 'analysis') return;
             if (els.scoreContainer) {
@@ -660,6 +714,72 @@
                     els.scoreUpdated.textContent = 'Error';
                 }
             }
+        }
+
+        function renderMaturityReport(data) {
+            if (!els.maturityReportContainer) return;
+            if (els.maturityReportUpdated) {
+                const ts = data && data.generatedAt ? formatTimestamp(data.generatedAt) : '—';
+                els.maturityReportUpdated.textContent = ts;
+            }
+            const headings = (data && Array.isArray(data.headings)) ? data.headings : [];
+            if (headings.length === 0) {
+                els.maturityReportContainer.innerHTML = '<div class="empty-state">Report verisi yok.</div>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            const avgCard = document.createElement('div');
+            avgCard.className = `analysis-card ${levelClass(data.averageLevel)}`;
+            avgCard.innerHTML = `
+                <div class="analysis-card-header">
+                    <span>Average Level</span>
+                    <strong>${escapeHtml(data.averageLevel || '—')}</strong>
+                </div>
+                <div class="analysis-card-body">
+                    <div>Cluster: <strong>${escapeHtml(data.cluster || state.cluster)}</strong></div>
+                </div>
+            `;
+            fragment.appendChild(avgCard);
+
+            const table = document.createElement('table');
+            table.className = 'analysis-table';
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Başlık</th>
+                        <th>Current</th>
+                        <th>Target</th>
+                        <th>Evidence / Missing</th>
+                    </tr>
+                </thead>
+            `;
+            const tbody = document.createElement('tbody');
+            headings.forEach(h => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${escapeHtml(h.title)}</td>
+                    <td>${levelCellHTML(h.currentLevel, h.targetLevel)}</td>
+                    <td>${escapeHtml(h.targetLevel || '—')}</td>
+                    <td>
+                        ${Array.isArray(h.evidence) && h.evidence.length ? `<div><strong>Evidence:</strong> ${h.evidence.map(escapeHtml).join(' | ')}</div>` : ''}
+                        ${Array.isArray(h.missing) && h.missing.length ? `<div><strong>Missing:</strong> ${h.missing.map(escapeHtml).join(' | ')}</div>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            fragment.appendChild(table);
+
+            if (data.warnings && data.warnings.length > 0) {
+                const warnBox = document.createElement('div');
+                warnBox.className = 'analysis-warning';
+                warnBox.innerHTML = `<strong>Uyarılar:</strong> ${escapeHtml(data.warnings.join(' | '))}`;
+                fragment.appendChild(warnBox);
+            }
+
+            els.maturityReportContainer.innerHTML = '';
+            els.maturityReportContainer.appendChild(fragment);
         }
 
         function renderAnalysis(payload) {
@@ -1202,7 +1322,7 @@
         function refreshAll() {
             els.refreshBtn.classList.add('rotating');
             if (state.view === 'analysis') {
-                Promise.all([fetchAnalysis(), fetchClusterAnalysis(), fetchScore()])
+                Promise.all([fetchAnalysis(), fetchMaturityReport(), fetchClusterAnalysis(), fetchScore()])
                     .finally(() => setTimeout(() => els.refreshBtn.classList.remove('rotating'), 500));
                 return;
             }
@@ -1212,6 +1332,12 @@
             }
             Promise.all(promises)
                 .then(() => setTimeout(() => els.refreshBtn.classList.remove('rotating'), 500));
+        }
+
+        function refreshKubeconfigFileLabel() {
+            if (!els.kubeconfigFile || !els.kubeconfigFileNameLabel) return;
+            const file = els.kubeconfigFile.files[0];
+            els.kubeconfigFileNameLabel.textContent = file ? file.name : 'Dosya seçilmedi';
         }
 
         function updateBreadcrumbs() {
@@ -1247,6 +1373,19 @@
                 }
             });
         });
+
+        if (els.clusterUpload && els.clusterUploadToggle) {
+            els.clusterUploadToggle.setAttribute('aria-expanded', String(els.clusterUpload.classList.contains('open')));
+            els.clusterUploadToggle.addEventListener('click', () => {
+                const isOpen = els.clusterUpload.classList.toggle('open');
+                els.clusterUploadToggle.setAttribute('aria-expanded', String(isOpen));
+            });
+        }
+
+        if (els.kubeconfigFile) {
+            els.kubeconfigFile.addEventListener('change', refreshKubeconfigFileLabel);
+        }
+        refreshKubeconfigFileLabel();
 
         els.clusterSelect.addEventListener('change', (e) => {
             state.cluster = e.target.value;
@@ -1296,6 +1435,10 @@
                 await fetchNamespaces();
                 refreshAll();
                 updateBreadcrumbs();
+
+                // Clear file input and label so alignment reset
+                els.kubeconfigFile.value = '';
+                refreshKubeconfigFileLabel();
             } catch (e) {
                 els.uploadStatus.textContent = `Error: ${e.message}`;
                 els.uploadStatus.classList.remove('success');

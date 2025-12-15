@@ -108,36 +108,104 @@ body {
 
 .cluster-upload {
     margin-top: 1rem;
-    padding: 1rem;
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(15, 23, 42, 0.85);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.cluster-upload h4 {
+.cluster-upload-toggle {
+    width: 100%;
+    background: transparent;
+    border: none;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    cursor: pointer;
+    color: inherit;
+    text-align: left;
+}
+
+.cluster-upload-info h4 {
     margin: 0;
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-main);
 }
 
-.cluster-upload p {
-    margin: 0;
+.cluster-upload-info p {
+    margin: 0.2rem 0 0;
     font-size: 0.75rem;
     color: var(--text-muted);
-    line-height: 1.4;
+    line-height: 1.35;
+}
+
+.cluster-upload-chevron svg {
+    stroke: var(--text-muted);
+    transition: transform 0.2s ease;
+}
+
+.cluster-upload.open .cluster-upload-chevron svg {
+    transform: rotate(180deg);
+}
+
+.cluster-upload-body {
+    padding: 0.85rem 1rem 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.cluster-upload:not(.open) .cluster-upload-body {
+    display: none;
+}
+
+.file-upload {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.65rem;
+    padding: 0.9rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    cursor: pointer;
+    box-sizing: border-box;
+    min-height: 68px;
+}
+
+.file-upload-button {
+    background: rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-main);
+    display: inline-flex;
+    align-items: center;
+}
+
+.file-upload-name {
+    width: 100%;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    white-space: normal;
+    line-height: 1.3;
+    display: block;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .cluster-upload input[type="file"] {
-    width: 100%;
-    border: 1px dashed rgba(148, 163, 184, 0.4);
-    border-radius: 8px;
-    padding: 0.5rem;
-    color: var(--text-muted);
-    background: rgba(15, 23, 42, 0.4);
+    display: none;
 }
 
 .cluster-upload input[type="text"] {
@@ -145,21 +213,24 @@ body {
     padding: 0.55rem 0.65rem;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 10px;
     color: var(--text-main);
+    font-size: 0.85rem;
+    box-sizing: border-box;
 }
 
 .cluster-upload .upload-btn {
     width: 100%;
-    padding: 0.55rem;
-    border-radius: 8px;
+    padding: 0.6rem;
+    border-radius: 10px;
     border: none;
     background: linear-gradient(135deg, var(--primary), #8b5cf6);
     color: white;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.25);
     transition: transform 0.2s ease, opacity 0.2s ease;
+    box-sizing: border-box;
 }
 
 .cluster-upload .upload-btn:hover {
