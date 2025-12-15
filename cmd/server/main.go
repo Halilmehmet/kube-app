@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"flag"
@@ -18,7 +17,6 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,83 +51,14 @@ type NamespaceResponse struct {
 	AllowAll         bool     `json:"allowAll"`
 }
 
-type AnalysisRow struct {
-	Title         string `json:"title"`
-	ProdLevel     string `json:"prodLevel"`
-	StagingLevel  string `json:"stagingLevel"`
-	DevLevel      string `json:"devLevel"`
-	ProdTarget    string `json:"prodTarget"`
-	StagingTarget string `json:"stagingTarget"`
-	DevTarget     string `json:"devTarget"`
-}
-
-// Cluster analysis signals (best-effort heuristics gathered from the live cluster)
-type ClusterAnalysisResponse struct {
-	Cluster       string               `json:"cluster"`
-	Generated     string               `json:"generatedAt"`
-	Nodes         NodeSignals          `json:"nodes"`
-	Network       NetworkSignals       `json:"network"`
-	Security      SecuritySignals      `json:"security"`
-	Observability ObservabilitySignals `json:"observability"`
-	GitOps        GitOpsSignals        `json:"gitops"`
-	Backup        BackupSignals        `json:"backup"`
-	Workload      WorkloadSignals      `json:"workload"`
-	Warnings      []string             `json:"warnings"`
-}
-
-type NodeSignals struct {
-	Total         int      `json:"total"`
-	ControlPlanes int      `json:"controlPlanes"`
-	Zones         []string `json:"zones"`
-	HasHA         bool     `json:"ha"`
-	CNI           string   `json:"cni"`
-}
-
-type NetworkSignals struct {
-	NetworkPolicies int      `json:"networkPolicies"`
-	DefaultDenyNS   []string `json:"defaultDenyNamespaces"`
-	Ingresses       []string `json:"ingressControllers"`
-}
-
-type SecuritySignals struct {
-	CertManager bool     `json:"certManager"`
-	PSAEnforce  []string `json:"psaEnforceNamespaces"`
-}
-
-type ObservabilitySignals struct {
-	Prometheus       bool `json:"prometheus"`
-	Alertmanager     bool `json:"alertmanager"`
-	Grafana          bool `json:"grafana"`
-	KubeStateMetrics bool `json:"kubeStateMetrics"`
-	EFK              bool `json:"efk"`
-}
-
-type GitOpsSignals struct {
-	ArgoCD bool `json:"argocd"`
-}
-
-type BackupSignals struct {
-	Velero bool `json:"velero"`
-}
-
-type WorkloadSignals struct {
-	HPAs           int      `json:"hpaCount"`
-	Autoscalers    []string `json:"autoscalers"`
-	ResourceQuotas int      `json:"resourceQuotaNamespaces"`
-}
-
-type ScoreResult struct {
-	Category  string   `json:"category"`
-	Level     string   `json:"level"`
-	Rationale string   `json:"rationale"`
-	Missing   []string `json:"missing,omitempty"`
-}
-
 // ClusterManager manages connections to multiple clusters
 type ClusterConnection struct {
 	Client            *kubernetes.Clientset
 	DefaultNamespace  string
 	AvailableContexts []string
+	Kubeconfig        []byte
+	Context           string
+	Insecure          bool
 }
 
 type ClusterManager struct {
@@ -142,18 +71,22 @@ var clusterManager = &ClusterManager{
 
 func main() {
 	var kubeconfig *string
-	if home := homedir.HomeDir(); home != "" {
-		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	} else {
-		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+	var port *string
+	defaultKubeconfig := strings.TrimSpace(os.Getenv("KUBECONFIG"))
+	if defaultKubeconfig == "" {
+		if home := homedir.HomeDir(); home != "" {
+			defaultKubeconfig = filepath.Join(home, ".kube", "config")
+		}
 	}
+	kubeconfig = flag.String("kubeconfig", defaultKubeconfig, "(optional) absolute path to the kubeconfig file (defaults to $KUBECONFIG or ~/.kube/config)")
+	port = flag.String("port", "8080", "HTTP listen port")
 	flag.Parse()
 
 	// Initialize default cluster
 	loadCluster("default", *kubeconfig)
 
 	fmt.Println("Connected to Kubernetes cluster 'default'")
-	fmt.Println("Starting web server on http://localhost:8080")
+	fmt.Printf("Starting web server on http://localhost:%s\n", *port)
 
 	// Serve static files
 	fs := http.FileServer(http.Dir("./web/static"))
@@ -170,11 +103,13 @@ func main() {
 	http.HandleFunc("/api/resource/yaml", handleResourceYAML)
 	http.HandleFunc("/api/resource/update", handleResourceUpdate)
 	http.HandleFunc("/api/resource/create", handleResourceCreate)
-	http.HandleFunc("/api/analysis", handleAnalysis)
-	http.HandleFunc("/api/cluster/analysis", handleClusterAnalysis)
-	http.HandleFunc("/api/cluster/score", handleClusterScore)
+	http.HandleFunc("/api/maturity/criteria", handleMaturityCriteria)
+	http.HandleFunc("/api/maturity/evidence", handleMaturityEvidence)
+	http.HandleFunc("/api/maturity/questions", handleMaturityQuestions)
+	http.HandleFunc("/api/maturity/analyze", handleMaturityAnalyze)
+	http.HandleFunc("/api/maturity/report/pdf", handleMaturityReportPDF)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }
 
 func loadCluster(name, configPath string) {
@@ -188,9 +123,17 @@ func loadCluster(name, configPath string) {
 		log.Printf("Error creating clientset for %s: %v", name, err)
 		return
 	}
+	var kubeconfigBytes []byte
+	if configPath != "" {
+		if b, err := os.ReadFile(configPath); err == nil {
+			kubeconfigBytes = b
+		}
+	}
 	clusterManager.Clusters[name] = &ClusterConnection{
 		Client:           clientset,
 		DefaultNamespace: "default",
+		Kubeconfig:       kubeconfigBytes,
+		Insecure:         config.Insecure || config.TLSClientConfig.Insecure,
 	}
 }
 
@@ -251,6 +194,7 @@ func handleClusterUpload(w http.ResponseWriter, r *http.Request) {
 		respondJSONError(w, http.StatusBadRequest, "Failed to read kubeconfig: "+err.Error())
 		return
 	}
+	insecure := strings.EqualFold(strings.TrimSpace(r.FormValue("insecure")), "true")
 
 	name := r.FormValue("name")
 	contextName := r.FormValue("context")
@@ -299,6 +243,13 @@ func handleClusterUpload(w http.ResponseWriter, r *http.Request) {
 		respondJSONError(w, http.StatusBadRequest, "Failed to build client config: "+err.Error())
 		return
 	}
+	if insecure {
+		// client-go rejects mixing Insecure=true with a root CA config (CAFile/CAData).
+		restCfg.Insecure = true
+		restCfg.TLSClientConfig.Insecure = true
+		restCfg.TLSClientConfig.CAFile = ""
+		restCfg.TLSClientConfig.CAData = nil
+	}
 	clientset, err := kubernetes.NewForConfig(restCfg)
 	if err != nil {
 		respondJSONError(w, http.StatusInternalServerError, "Failed to create clientset: "+err.Error())
@@ -326,6 +277,9 @@ func handleClusterUpload(w http.ResponseWriter, r *http.Request) {
 		Client:            clientset,
 		DefaultNamespace:  defaultNamespace,
 		AvailableContexts: contexts,
+		Kubeconfig:        data,
+		Context:           contextName,
+		Insecure:          insecure,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -337,6 +291,11 @@ func handleClusterUpload(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
+	if strings.HasPrefix(r.URL.Path, "/api/") || r.URL.Path == "/api" {
+		respondJSONError(w, http.StatusNotFound, "API route not found")
+		return
+	}
+
 	tmpl, err := template.ParseFiles("web/templates/index.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -1366,595 +1325,4 @@ func handleResourceCreate(w http.ResponseWriter, r *http.Request) {
 		"message": fmt.Sprintf("Created: %v", createdResources),
 		"created": createdResources,
 	})
-}
-
-func handleAnalysis(w http.ResponseWriter, r *http.Request) {
-	rows, err := parseCompositeAssessment("test.md")
-	if err != nil {
-		respondJSONError(w, http.StatusInternalServerError, "Failed to build analysis: "+err.Error())
-		return
-	}
-
-	payload := map[string]interface{}{
-		"rows":        rows,
-		"generatedAt": time.Now().UTC().Format(time.RFC3339),
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(payload); err != nil {
-		log.Printf("encode analysis response failed: %v", err)
-	}
-}
-
-func parseCompositeAssessment(path string) ([]AnalysisRow, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	content := string(data)
-	start := strings.Index(content, "## COMPOSITE ASSESSMENT MATRIX")
-	if start == -1 {
-		return nil, fmt.Errorf("composite assessment section not found")
-	}
-	section := content[start:]
-	endMarker := "## 2026 Action Plan Template"
-	if idx := strings.Index(section, endMarker); idx != -1 {
-		section = section[:idx]
-	}
-
-	scanner := bufio.NewScanner(strings.NewReader(section))
-	var rows []AnalysisRow
-	lineCount := 0
-	inTable := false
-
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			if inTable && lineCount > 0 {
-				break
-			}
-			continue
-		}
-
-		if strings.HasPrefix(line, "|") {
-			inTable = true
-			lineCount++
-			if lineCount <= 2 {
-				continue // skip header + alignment rows
-			}
-
-			parts := strings.Split(line, "|")
-			if len(parts) < 8 {
-				continue
-			}
-
-			row := AnalysisRow{
-				Title:         sanitizeCell(parts[1]),
-				ProdLevel:     sanitizeCell(parts[2]),
-				StagingLevel:  sanitizeCell(parts[3]),
-				DevLevel:      sanitizeCell(parts[4]),
-				ProdTarget:    sanitizeCell(parts[5]),
-				StagingTarget: sanitizeCell(parts[6]),
-				DevTarget:     sanitizeCell(parts[7]),
-			}
-			if row.Title != "" {
-				rows = append(rows, row)
-			}
-			continue
-		}
-
-		if inTable {
-			break
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-	if len(rows) == 0 {
-		return nil, fmt.Errorf("no rows parsed from assessment table")
-	}
-	return rows, nil
-}
-
-func sanitizeCell(val string) string {
-	v := strings.TrimSpace(val)
-	v = strings.Trim(v, "`")
-	v = strings.ReplaceAll(v, "*", "")
-	v = strings.ReplaceAll(v, "_", "")
-	v = strings.ReplaceAll(v, "~", "")
-	return strings.TrimSpace(v)
-}
-
-// --- Cluster analysis (best-effort heuristics) ---
-
-func handleClusterAnalysis(w http.ResponseWriter, r *http.Request) {
-	conn := getClusterConn(r)
-	if conn == nil || conn.Client == nil {
-		respondJSONError(w, http.StatusBadRequest, "Cluster client not available")
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	signals, warnings, err := collectClusterSignals(ctx, conn.Client)
-	if err != nil {
-		respondJSONError(w, http.StatusInternalServerError, "Cluster analysis failed: "+err.Error())
-		return
-	}
-
-	resp := ClusterAnalysisResponse{
-		Cluster:       r.URL.Query().Get("cluster"),
-		Generated:     time.Now().UTC().Format(time.RFC3339),
-		Nodes:         signals.Nodes,
-		Network:       signals.Network,
-		Security:      signals.Security,
-		Observability: signals.Observability,
-		GitOps:        signals.GitOps,
-		Backup:        signals.Backup,
-		Workload:      signals.Workload,
-		Warnings:      warnings,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
-}
-
-type collectedSignals struct {
-	Nodes         NodeSignals
-	Network       NetworkSignals
-	Security      SecuritySignals
-	Observability ObservabilitySignals
-	GitOps        GitOpsSignals
-	Backup        BackupSignals
-	Workload      WorkloadSignals
-}
-
-func collectClusterSignals(ctx context.Context, client *kubernetes.Clientset) (collectedSignals, []string, error) {
-	var warns []string
-	out := collectedSignals{}
-
-	// Nodes
-	nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return out, warns, err
-	}
-	controlPlanes := 0
-	zones := map[string]struct{}{}
-	for _, n := range nodes.Items {
-		if isControlPlaneNode(&n) {
-			controlPlanes++
-		}
-		if z, ok := n.Labels["topology.kubernetes.io/zone"]; ok && z != "" {
-			zones[z] = struct{}{}
-		}
-	}
-	zoneList := make([]string, 0, len(zones))
-	for z := range zones {
-		zoneList = append(zoneList, z)
-	}
-	sort.Strings(zoneList)
-	out.Nodes = NodeSignals{
-		Total:         len(nodes.Items),
-		ControlPlanes: controlPlanes,
-		Zones:         zoneList,
-		HasHA:         controlPlanes >= 3 && len(zoneList) >= 2,
-		CNI:           "",
-	}
-
-	// Workload resources to detect components
-	deploys, err := client.AppsV1().Deployments(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return out, warns, err
-	}
-	daemonsets, err := client.AppsV1().DaemonSets(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return out, warns, err
-	}
-	statefulsets, err := client.AppsV1().StatefulSets(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return out, warns, err
-	}
-
-	// CNI detection (daemonset in kube-system is typical)
-	out.Nodes.CNI = detectCNI(daemonsets.Items)
-
-	// Network policies
-	nps, err := client.NetworkingV1().NetworkPolicies(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return out, warns, err
-	}
-	out.Network.NetworkPolicies = len(nps.Items)
-	out.Network.DefaultDenyNS = detectDefaultDenyNamespaces(nps.Items)
-
-	// Ingress controllers
-	out.Network.Ingresses = detectIngressControllers(deploys.Items, daemonsets.Items)
-
-	// Security signals
-	out.Security.CertManager = hasDeploymentLike(deploys.Items, "cert-manager")
-	out.Security.PSAEnforce = detectPSAEnforceNamespaces(ctx, client)
-
-	// Observability
-	out.Observability.Prometheus = hasDeploymentLike(deploys.Items, "prometheus")
-	out.Observability.Alertmanager = hasDeploymentLike(deploys.Items, "alertmanager")
-	out.Observability.Grafana = hasDeploymentLike(deploys.Items, "grafana")
-	out.Observability.KubeStateMetrics = hasDeploymentLike(deploys.Items, "kube-state-metrics")
-	out.Observability.EFK = hasAnyStatefulSetLike(statefulsets.Items, []string{"elasticsearch", "opensearch"}) &&
-		(hasDaemonSetLike(daemonsets.Items, "fluentd") || hasDaemonSetLike(daemonsets.Items, "fluent-bit")) &&
-		hasDeploymentLike(deploys.Items, "kibana")
-
-	// GitOps
-	out.GitOps.ArgoCD = hasDeploymentLike(deploys.Items, "argocd")
-
-	// Backup
-	out.Backup.Velero = hasDeploymentLike(deploys.Items, "velero")
-
-	// Workload / autoscaling signals
-	hpas, err := client.AutoscalingV2().HorizontalPodAutoscalers(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		warns = append(warns, "HPA list failed: "+err.Error())
-	} else {
-		out.Workload.HPAs = len(hpas.Items)
-	}
-	autos := detectAutoscalers(deploys.Items, daemonsets.Items)
-	out.Workload.Autoscalers = autos
-	out.Workload.ResourceQuotas = countNamespacesWithResourceQuotas(ctx, client)
-
-	return out, warns, nil
-}
-
-func isControlPlaneNode(n *corev1.Node) bool {
-	if n == nil {
-		return false
-	}
-	if _, ok := n.Labels["node-role.kubernetes.io/master"]; ok {
-		return true
-	}
-	if _, ok := n.Labels["node-role.kubernetes.io/control-plane"]; ok {
-		return true
-	}
-	return false
-}
-
-func detectCNI(dss []appsv1.DaemonSet) string {
-	for _, ds := range dss {
-		name := strings.ToLower(ds.Name)
-		switch {
-		case strings.Contains(name, "calico"):
-			return "Calico"
-		case strings.Contains(name, "cilium"):
-			return "Cilium"
-		case strings.Contains(name, "flannel"):
-			return "Flannel"
-		case strings.Contains(name, "weave"):
-			return "Weave"
-		case strings.Contains(name, "ovn"):
-			return "OVN"
-		}
-	}
-	return ""
-}
-
-func detectIngressControllers(deploys []appsv1.Deployment, dss []appsv1.DaemonSet) []string {
-	var out []string
-	candidates := []string{"ingress-nginx", "nginx-ingress", "traefik", "contour", "haproxy", "haproxy-ingress", "istio-ingress", "kong"}
-	for _, d := range deploys {
-		for _, c := range candidates {
-			if strings.Contains(strings.ToLower(d.Name), c) {
-				out = append(out, d.Namespace+"/"+d.Name)
-				break
-			}
-		}
-	}
-	for _, ds := range dss {
-		for _, c := range candidates {
-			if strings.Contains(strings.ToLower(ds.Name), c) {
-				out = append(out, ds.Namespace+"/"+ds.Name)
-				break
-			}
-		}
-	}
-	return out
-}
-
-func detectDefaultDenyNamespaces(nps []networkingv1.NetworkPolicy) []string {
-	nsSet := map[string]struct{}{}
-	for _, np := range nps {
-		if len(np.Spec.PolicyTypes) == 0 {
-			continue
-		}
-		if len(np.Spec.Ingress) == 0 && len(np.Spec.Egress) == 0 && len(np.Spec.PodSelector.MatchLabels) == 0 && len(np.Spec.PodSelector.MatchExpressions) == 0 {
-			nsSet[np.Namespace] = struct{}{}
-		}
-	}
-	out := make([]string, 0, len(nsSet))
-	for ns := range nsSet {
-		out = append(out, ns)
-	}
-	sort.Strings(out)
-	return out
-}
-
-func detectPSAEnforceNamespaces(ctx context.Context, client *kubernetes.Clientset) []string {
-	list, err := client.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil
-	}
-	var out []string
-	for _, ns := range list.Items {
-		if lvl, ok := ns.Labels["pod-security.kubernetes.io/enforce"]; ok && lvl != "" {
-			out = append(out, ns.Name+" ("+lvl+")")
-		}
-	}
-	sort.Strings(out)
-	return out
-}
-
-func hasDeploymentLike(items []appsv1.Deployment, needle string) bool {
-	needle = strings.ToLower(needle)
-	for _, it := range items {
-		if strings.Contains(strings.ToLower(it.Name), needle) {
-			return true
-		}
-	}
-	return false
-}
-
-func hasDaemonSetLike(items []appsv1.DaemonSet, needle string) bool {
-	needle = strings.ToLower(needle)
-	for _, it := range items {
-		if strings.Contains(strings.ToLower(it.Name), needle) {
-			return true
-		}
-	}
-	return false
-}
-
-func hasStatefulSetLike(items []appsv1.StatefulSet, needle string) bool {
-	needle = strings.ToLower(needle)
-	for _, it := range items {
-		if strings.Contains(strings.ToLower(it.Name), needle) {
-			return true
-		}
-	}
-	return false
-}
-
-func hasAnyStatefulSetLike(items []appsv1.StatefulSet, needles []string) bool {
-	for _, n := range needles {
-		if hasStatefulSetLike(items, n) {
-			return true
-		}
-	}
-	return false
-}
-
-func detectAutoscalers(deploys []appsv1.Deployment, dss []appsv1.DaemonSet) []string {
-	var out []string
-	for _, d := range deploys {
-		name := strings.ToLower(d.Name)
-		switch {
-		case strings.Contains(name, "cluster-autoscaler"):
-			out = append(out, d.Namespace+"/"+d.Name)
-		case strings.Contains(name, "karpenter"):
-			out = append(out, d.Namespace+"/"+d.Name)
-		}
-	}
-	for _, ds := range dss {
-		name := strings.ToLower(ds.Name)
-		switch {
-		case strings.Contains(name, "cluster-autoscaler"):
-			out = append(out, ds.Namespace+"/"+ds.Name)
-		case strings.Contains(name, "karpenter"):
-			out = append(out, ds.Namespace+"/"+ds.Name)
-		}
-	}
-	return out
-}
-
-func countNamespacesWithResourceQuotas(ctx context.Context, client *kubernetes.Clientset) int {
-	nss, err := client.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return 0
-	}
-	count := 0
-	for _, ns := range nss.Items {
-		rqs, err := client.CoreV1().ResourceQuotas(ns.Name).List(ctx, metav1.ListOptions{Limit: 1})
-		if err != nil {
-			continue
-		}
-		if len(rqs.Items) > 0 {
-			count++
-		}
-	}
-	return count
-}
-
-// --- Cluster scoring (heuristic mapping to levels) ---
-
-func handleClusterScore(w http.ResponseWriter, r *http.Request) {
-	conn := getClusterConn(r)
-	if conn == nil || conn.Client == nil {
-		respondJSONError(w, http.StatusBadRequest, "Cluster client not available")
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	signals, warns, err := collectClusterSignals(ctx, conn.Client)
-	if err != nil {
-		respondJSONError(w, http.StatusInternalServerError, "Cluster analysis failed: "+err.Error())
-		return
-	}
-
-	results := scoreCluster(signals)
-	payload := map[string]interface{}{
-		"generatedAt": time.Now().UTC().Format(time.RFC3339),
-		"cluster":     r.URL.Query().Get("cluster"),
-		"scores":      results,
-		"warnings":    warns,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(payload)
-}
-
-func scoreCluster(sig collectedSignals) []ScoreResult {
-	var out []ScoreResult
-
-	// HA / Control Plane
-	haLevel := "L1"
-	var missing []string
-	if sig.Nodes.ControlPlanes >= 3 && len(sig.Nodes.Zones) >= 2 {
-		haLevel = "L4"
-	} else if sig.Nodes.ControlPlanes >= 3 {
-		haLevel = "L3"
-		missing = append(missing, "Farklı AZ/zone dağılımı")
-	} else if sig.Nodes.ControlPlanes == 2 {
-		haLevel = "L2"
-		missing = append(missing, "3+ control-plane")
-	} else {
-		missing = append(missing, "Multi-CP setup")
-	}
-	out = append(out, ScoreResult{
-		Category:  "HA / Control Plane",
-		Level:     haLevel,
-		Rationale: fmt.Sprintf("ControlPlanes=%d Zones=%d", sig.Nodes.ControlPlanes, len(sig.Nodes.Zones)),
-		Missing:   missing,
-	})
-
-	// CNI + NetworkPolicy
-	npLevel := "L1"
-	var npMissing []string
-	if sig.Network.NetworkPolicies > 0 {
-		npLevel = "L2"
-		if len(sig.Network.DefaultDenyNS) > 0 {
-			npLevel = "L3"
-		} else {
-			npMissing = append(npMissing, "Default-deny namespace")
-		}
-	} else {
-		npMissing = append(npMissing, "NetworkPolicy yok")
-	}
-	if sig.Nodes.CNI == "" {
-		npMissing = append(npMissing, "CNI tespiti yok")
-	}
-	out = append(out, ScoreResult{
-		Category:  "NetworkPolicy / CNI",
-		Level:     npLevel,
-		Rationale: fmt.Sprintf("NP=%d DefaultDeny=%d CNI=%s", sig.Network.NetworkPolicies, len(sig.Network.DefaultDenyNS), sig.Nodes.CNI),
-		Missing:   npMissing,
-	})
-
-	// Security (cert-manager + PSA)
-	secLevel := "L1"
-	var secMissing []string
-	if sig.Security.CertManager {
-		secLevel = "L2"
-	} else {
-		secMissing = append(secMissing, "cert-manager yok")
-	}
-	if len(sig.Security.PSAEnforce) > 0 {
-		if secLevel == "L2" {
-			secLevel = "L3"
-		}
-	} else {
-		secMissing = append(secMissing, "PSA enforce label'lı NS yok")
-	}
-	out = append(out, ScoreResult{
-		Category:  "Security / Certificates",
-		Level:     secLevel,
-		Rationale: fmt.Sprintf("cert-manager=%t PSA enforce NS=%d", sig.Security.CertManager, len(sig.Security.PSAEnforce)),
-		Missing:   secMissing,
-	})
-
-	// Observability
-	obsLevel := "L1"
-	var obsMissing []string
-	if sig.Observability.Prometheus && sig.Observability.Grafana && sig.Observability.KubeStateMetrics {
-		obsLevel = "L3"
-	} else {
-		if !sig.Observability.Prometheus {
-			obsMissing = append(obsMissing, "Prometheus yok")
-		}
-		if !sig.Observability.Grafana {
-			obsMissing = append(obsMissing, "Grafana yok")
-		}
-		if !sig.Observability.KubeStateMetrics {
-			obsMissing = append(obsMissing, "kube-state-metrics yok")
-		}
-	}
-	if obsLevel == "L3" && sig.Observability.Alertmanager {
-		obsLevel = "L4"
-	} else if obsLevel == "L3" {
-		obsMissing = append(obsMissing, "Alertmanager yok")
-	}
-	out = append(out, ScoreResult{
-		Category:  "Observability",
-		Level:     obsLevel,
-		Rationale: fmt.Sprintf("Prom=%t Grafana=%t KSM=%t Alertmanager=%t EFK=%t", sig.Observability.Prometheus, sig.Observability.Grafana, sig.Observability.KubeStateMetrics, sig.Observability.Alertmanager, sig.Observability.EFK),
-		Missing:   obsMissing,
-	})
-
-	// GitOps
-	gitopsLevel := "L1"
-	var gitopsMissing []string
-	if sig.GitOps.ArgoCD {
-		gitopsLevel = "L3"
-	} else {
-		gitopsMissing = append(gitopsMissing, "ArgoCD yok")
-	}
-	out = append(out, ScoreResult{
-		Category:  "GitOps",
-		Level:     gitopsLevel,
-		Rationale: fmt.Sprintf("ArgoCD=%t", sig.GitOps.ArgoCD),
-		Missing:   gitopsMissing,
-	})
-
-	// Backup
-	backupLevel := "L1"
-	var backupMissing []string
-	if sig.Backup.Velero {
-		backupLevel = "L3"
-	} else {
-		backupMissing = append(backupMissing, "Velero yok")
-	}
-	out = append(out, ScoreResult{
-		Category:  "Backup",
-		Level:     backupLevel,
-		Rationale: fmt.Sprintf("Velero=%t", sig.Backup.Velero),
-		Missing:   backupMissing,
-	})
-
-	// Autoscaling / Resource Management
-	autoLevel := "L1"
-	var autoMissing []string
-	if sig.Workload.HPAs > 0 {
-		autoLevel = "L2"
-	} else {
-		autoMissing = append(autoMissing, "HPA yok")
-	}
-	if len(sig.Workload.Autoscalers) > 0 {
-		if autoLevel == "L2" {
-			autoLevel = "L3"
-		}
-	} else {
-		autoMissing = append(autoMissing, "Cluster autoscaler/Karpenter yok")
-	}
-	if sig.Workload.ResourceQuotas > 0 && autoLevel == "L3" {
-		autoLevel = "L4"
-	} else if sig.Workload.ResourceQuotas == 0 {
-		autoMissing = append(autoMissing, "ResourceQuota uygulanmıyor")
-	}
-	out = append(out, ScoreResult{
-		Category:  "Autoscaling & Quota",
-		Level:     autoLevel,
-		Rationale: fmt.Sprintf("HPA=%d Autoscaler=%d RQ-NS=%d", sig.Workload.HPAs, len(sig.Workload.Autoscalers), sig.Workload.ResourceQuotas),
-		Missing:   autoMissing,
-	})
-
-	return out
 }

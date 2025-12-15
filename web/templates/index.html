@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=20251215b">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
     <script src="https://unpkg.com/cytoscape-node-html-label@1.2.2/dist/cytoscape-node-html-label.min.js"></script>
     <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
@@ -50,6 +50,10 @@
                         <input type="file" id="kubeconfigFile" accept=".yaml,.yml,.conf,.json,.txt">
                         <input type="text" id="kubeconfigName" placeholder="Cluster name (optional)">
                         <input type="text" id="kubeconfigContext" placeholder="Context (optional)">
+                        <label class="checkbox-row" for="kubeconfigInsecure">
+                            <input type="checkbox" id="kubeconfigInsecure">
+                            <span>Insecure (TLS doğrulamasını atla)</span>
+                        </label>
                         <button type="button" id="uploadKubeconfigBtn" class="upload-btn">Add Cluster</button>
                         <div id="uploadStatus" class="upload-status" aria-live="polite"></div>
                     </div>
@@ -59,20 +63,20 @@
             <nav class="sidebar-nav">
                 <div class="nav-group">
                     <div class="nav-header">Views</div>
+                    <a href="#" class="nav-item active" data-type="maturity">Maturity Analysis</a>
                     <a href="#" class="nav-item topology-nav" data-type="topology">Topology Graph</a>
                     <a href="#" class="nav-item create-nav" data-type="create">➕ Create Resource</a>
                 </div>
 
                 <div class="nav-group">
                     <div class="nav-header">Workloads</div>
-                    <a href="#" class="nav-item active" data-type="pod">Pods</a>
+                    <a href="#" class="nav-item" data-type="pod">Pods</a>
                     <a href="#" class="nav-item" data-type="deployment">Deployments</a>
                     <a href="#" class="nav-item" data-type="statefulset">StatefulSets</a>
                     <a href="#" class="nav-item" data-type="replicaset">ReplicaSets</a>
                     <a href="#" class="nav-item" data-type="daemonset">DaemonSets</a>
                     <a href="#" class="nav-item" data-type="job">Jobs</a>
                     <a href="#" class="nav-item" data-type="cronjob">CronJobs</a>
-                    <a href="#" class="nav-item" data-type="analysis">Maturity Analysis</a>
                 </div>
 
                 <div class="nav-group">
@@ -114,7 +118,125 @@
                 </div>
             </header>
 
-            <div class="content-body" id="listView">
+            <div class="content-body" id="analysisView">
+                <div class="maturity-shell">
+                    <div class="maturity-topbar">
+                        <div class="maturity-titleblock">
+                            <h2 class="maturity-title">Cluster Olgunluk Analizi</h2>
+                            <div class="maturity-subtitle">`test.md` rubric + cluster kanıtı + (opsiyonel) LLM değerlendirmesi.</div>
+                        </div>
+                        <div class="maturity-actions">
+                            <button id="loadCriteriaBtn" class="maturity-btn">Reload</button>
+                            <button id="downloadPdfBtn" class="maturity-btn">PDF</button>
+                            <button id="clearMaturityBtn" class="maturity-btn">Temizle</button>
+                            <button id="runMaturityBtn" class="maturity-btn primary">Analyze</button>
+                        </div>
+                    </div>
+
+                    <div class="maturity-shell-body">
+                        <section class="maturity-main">
+                            <div class="maturity-toolbar">
+                                <div class="maturity-search">
+                                    <input id="maturitySearch" class="maturity-input" type="text" placeholder="Kriter ara (örn: RBAC, NetworkPolicy, Backup)">
+                                </div>
+                                <div class="maturity-toolbar-actions">
+                                    <button id="loadEvidenceBtn" class="maturity-btn">Evidence</button>
+                                </div>
+                            </div>
+
+                            <div id="maturityResults" class="maturity-results"></div>
+                        </section>
+
+                        <aside class="maturity-side">
+                            <div class="maturity-panel">
+                                <div class="maturity-panel-header">
+                                    <h3>Özet</h3>
+                                    <div id="maturityOverallBadge" class="maturity-badge">—</div>
+                                </div>
+                                <div id="maturitySummary" class="maturity-summary"></div>
+                            </div>
+
+                            <div class="maturity-panel">
+                                <div class="maturity-panel-header">
+                                    <h3>LLM Ayarları</h3>
+                                </div>
+                                <div class="maturity-llm-grid">
+                                    <div class="maturity-field">
+                                        <label class="maturity-label" for="llmProvider">Provider</label>
+                                        <select id="llmProvider" class="maturity-select">
+                                            <option value="auto">Auto</option>
+                                            <option value="gemini">Gemini</option>
+                                            <option value="openai">OpenAI</option>
+                                            <option value="none">None</option>
+                                        </select>
+                                    </div>
+                                    <div class="maturity-field">
+                                        <label class="maturity-label" for="llmModel">Model</label>
+                                        <input id="llmModel" class="maturity-input" type="text" placeholder="gemini-1.5-flash / gpt-4o-mini">
+                                    </div>
+                                    <div class="maturity-field">
+                                        <label class="maturity-label" for="llmApiKey">API Key</label>
+                                        <input id="llmApiKey" class="maturity-input" type="password" placeholder="(sadece bu istek için)">
+                                    </div>
+                                </div>
+                                <div class="maturity-hint">API key tarayıcıda tutulmaz; sadece bu request ile backend’e gider.</div>
+                            </div>
+
+                            <div class="maturity-panel">
+                                <div class="maturity-panel-header">
+                                    <h3>Notlar</h3>
+                                </div>
+                                <textarea id="maturityNotes" class="maturity-notes" placeholder="Örn: Control plane mimarisi, backup aracı, GitOps süreçleri, RBAC politikaları..."></textarea>
+                            </div>
+
+                            <div id="maturityStatus" class="maturity-status" aria-live="polite"></div>
+
+                            <div class="maturity-panel">
+                                <div class="maturity-panel-header">
+                                    <h3>Evidence</h3>
+                                </div>
+                                <div id="maturityEvidence" class="maturity-evidence empty">Henüz yüklenmedi.</div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+
+                <div id="maturityWizard" class="maturity-wizard hidden" role="dialog" aria-modal="true" aria-labelledby="maturityWizardTitle">
+                    <div class="maturity-wizard-card">
+                        <div class="maturity-wizard-header">
+                            <div class="maturity-wizard-titleblock">
+                                <h3 id="maturityWizardTitle">Ön Analiz Soruları</h3>
+                                <div id="maturityWizardSubtitle" class="maturity-wizard-subtitle">Precheck tamamlandı. Eksik/şüpheli kriterler için hızlı sorular.</div>
+                            </div>
+                            <button id="maturityWizardClose" class="maturity-btn">Kapat</button>
+                        </div>
+
+                        <div class="maturity-wizard-body">
+                            <div class="maturity-wizard-step">
+                                <div class="maturity-wizard-meta">
+                                    <div id="maturityWizardProgress" class="maturity-muted">—</div>
+                                    <div id="maturityWizardLLM" class="maturity-muted"></div>
+                                </div>
+
+                                <div id="maturityWizardContent" class="maturity-wizard-content">
+                                    <div class="maturity-muted">Soruları oluşturmak için devam edin.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="maturity-wizard-actions">
+                            <button id="maturityWizardGenerate" class="maturity-btn">Soruları Oluştur</button>
+                            <button id="maturityWizardSkip" class="maturity-btn">Atla</button>
+                            <div class="spacer"></div>
+                            <button id="maturityWizardPrev" class="maturity-btn">Geri</button>
+                            <button id="maturityWizardNext" class="maturity-btn primary">İleri</button>
+                            <button id="maturityWizardRun" class="maturity-btn primary hidden">Rapor Oluştur</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-body hidden" id="listView">
                 <div class="grid-container" id="resourceGrid">
                     <div class="loading-state">Loading resources...</div>
                 </div>
@@ -344,60 +466,6 @@
                 </div>
             </div>
 
-            <div class="content-body hidden" id="analysisView">
-                <div class="analysis-header">
-                    <div>
-                        <h2>📊 Maturity Analysis</h2>
-                        <p>Assessment levels derived from the CNCF maturity plan (test.md).</p>
-                    </div>
-                    <div class="analysis-meta">
-                        <span>Last synced:</span>
-                        <span id="analysisUpdated" class="analysis-updated">—</span>
-                    </div>
-                </div>
-                <div id="analysisContent" class="analysis-content">
-                    <div class="loading-state">Loading maturity insights...</div>
-                </div>
-                <div class="analysis-header">
-                    <div>
-                        <h2>✅ Current Cluster Maturity</h2>
-                        <p>Seçili cluster sinyallerine göre otomatik özet.</p>
-                    </div>
-                    <div class="analysis-meta">
-                        <span>Last computed:</span>
-                        <span id="maturityReportUpdated" class="analysis-updated">—</span>
-                    </div>
-                </div>
-                <div id="maturityReportContent" class="analysis-content">
-                    <div class="loading-state">Maturity report hazırlanıyor...</div>
-                </div>
-                <div class="analysis-header">
-                    <div>
-                        <h2>🧭 Cluster Insights</h2>
-                        <p>Canlı cluster sinyallerine göre mevcut durum (heuristik).</p>
-                    </div>
-                    <div class="analysis-meta">
-                        <span>Last sampled:</span>
-                        <span id="clusterAnalysisUpdated" class="analysis-updated">—</span>
-                    </div>
-                </div>
-                <div id="clusterAnalysisContent" class="analysis-content">
-                    <div class="loading-state">Cluster analysis bekleniyor...</div>
-                </div>
-                <div class="analysis-header">
-                    <div>
-                        <h2>🎯 Automated Level Guess</h2>
-                        <p>Cluster sinyallerine göre kriter başına seviye tahmini.</p>
-                    </div>
-                    <div class="analysis-meta">
-                        <span>Last scored:</span>
-                        <span id="scoreUpdated" class="analysis-updated">—</span>
-                    </div>
-                </div>
-                <div id="scoreContent" class="analysis-content">
-                    <div class="loading-state">Skor hesaplanıyor...</div>
-                </div>
-            </div>
         </main>
     </div>
 
@@ -438,8 +506,8 @@
         const state = {
             cluster: 'default',
             namespace: 'default',
-            resourceType: 'pod',
-            view: 'list'
+            resourceType: 'maturity',
+            view: 'analysis'
         };
 
         // UI Elements
@@ -451,6 +519,7 @@
             kubeconfigFile: document.getElementById('kubeconfigFile'),
             kubeconfigName: document.getElementById('kubeconfigName'),
             kubeconfigContext: document.getElementById('kubeconfigContext'),
+            kubeconfigInsecure: document.getElementById('kubeconfigInsecure'),
             uploadBtn: document.getElementById('uploadKubeconfigBtn'),
             uploadStatus: document.getElementById('uploadStatus'),
             nsSelect: document.getElementById('nsSelect'),
@@ -464,38 +533,72 @@
             graphView: document.getElementById('graphView'),
             createView: document.getElementById('createView'),
             analysisView: document.getElementById('analysisView'),
-            analysisContainer: document.getElementById('analysisContent'),
-            analysisUpdated: document.getElementById('analysisUpdated'),
-            maturityReportContainer: document.getElementById('maturityReportContent'),
-            maturityReportUpdated: document.getElementById('maturityReportUpdated'),
-            clusterAnalysisContainer: document.getElementById('clusterAnalysisContent'),
-            clusterAnalysisUpdated: document.getElementById('clusterAnalysisUpdated'),
-            scoreContainer: document.getElementById('scoreContent'),
-            scoreUpdated: document.getElementById('scoreUpdated')
+            maturityNotes: document.getElementById('maturityNotes'),
+            maturityStatus: document.getElementById('maturityStatus'),
+            maturityResults: document.getElementById('maturityResults'),
+            maturitySearch: document.getElementById('maturitySearch'),
+            loadEvidenceBtn: document.getElementById('loadEvidenceBtn'),
+            maturityEvidence: document.getElementById('maturityEvidence'),
+            maturitySummary: document.getElementById('maturitySummary'),
+            maturityOverallBadge: document.getElementById('maturityOverallBadge'),
+            runMaturityBtn: document.getElementById('runMaturityBtn'),
+            loadCriteriaBtn: document.getElementById('loadCriteriaBtn'),
+            downloadPdfBtn: document.getElementById('downloadPdfBtn'),
+            clearMaturityBtn: document.getElementById('clearMaturityBtn'),
+            llmProvider: document.getElementById('llmProvider'),
+            llmModel: document.getElementById('llmModel'),
+            llmApiKey: document.getElementById('llmApiKey'),
+            maturityWizard: document.getElementById('maturityWizard'),
+            maturityWizardClose: document.getElementById('maturityWizardClose'),
+            maturityWizardGenerate: document.getElementById('maturityWizardGenerate'),
+            maturityWizardSkip: document.getElementById('maturityWizardSkip'),
+            maturityWizardPrev: document.getElementById('maturityWizardPrev'),
+            maturityWizardNext: document.getElementById('maturityWizardNext'),
+            maturityWizardRun: document.getElementById('maturityWizardRun'),
+            maturityWizardContent: document.getElementById('maturityWizardContent'),
+            maturityWizardProgress: document.getElementById('maturityWizardProgress'),
+            maturityWizardLLM: document.getElementById('maturityWizardLLM'),
+            maturityWizardSubtitle: document.getElementById('maturityWizardSubtitle')
         };
 
         // Initial Cytoscape instance
         let cy = null;
-        let lastAnalysisPayload = null;
-        let lastClusterAnalysis = null;
-        let lastScore = null;
+
+        function truncateText(value, maxLen = 240) {
+            const str = String(value || '');
+            if (str.length <= maxLen) return str;
+            return str.slice(0, maxLen) + '…';
+        }
+
         async function requestJSON(url, options = {}) {
             const res = await fetch(url, options);
+            const contentType = (res.headers.get('content-type') || '').toLowerCase();
             const text = await res.text();
+
             let data = null;
-            if (text) {
+            const trimmed = (text || '').trim();
+            const looksLikeJSON = trimmed.startsWith('{') || trimmed.startsWith('[');
+            const shouldParseJSON = (trimmed && contentType.includes('application/json')) || looksLikeJSON;
+
+            if (shouldParseJSON) {
                 try {
-                    data = JSON.parse(text);
+                    data = trimmed ? JSON.parse(text) : null;
                 } catch (err) {
-                    throw new Error(text || `Unexpected response (${res.status})`);
+                    throw new Error(`Invalid JSON response (HTTP ${res.status}): ${truncateText(text)}`);
                 }
             }
+
             if (!res.ok) {
                 const message = data && typeof data === 'object' && data !== null && 'message' in data
                     ? data.message
-                    : text || res.statusText;
-                throw new Error(message);
+                    : (trimmed ? truncateText(text) : res.statusText);
+                throw new Error(message || `Request failed (HTTP ${res.status})`);
             }
+
+            if (data === null) {
+                throw new Error(`Unexpected non-JSON response (HTTP ${res.status}): ${truncateText(text)}`);
+            }
+
             return data;
         }
 
@@ -503,7 +606,13 @@
         async function init() {
             await fetchClusters();
             await fetchNamespaces();
-            refreshAll();
+            setView('analysis');
+            setActiveNav('maturity');
+            updateBreadcrumbs();
+            restoreLLMSettings();
+            restoreMaturityAnswers();
+            await loadMaturityCriteria();
+            loadMaturityEvidence();
 
             // Auto refresh DISABLED for stability
             // setInterval(refreshAll, 5000);
@@ -519,7 +628,10 @@
                 els.analysisView.classList.add('hidden');
             };
 
-            if (mode === 'list') {
+            if (mode === 'analysis') {
+                hideAll();
+                els.analysisView.classList.remove('hidden');
+            } else if (mode === 'list') {
                 hideAll();
                 els.listView.classList.remove('hidden');
             } else if (mode === 'graph') {
@@ -529,9 +641,6 @@
             } else if (mode === 'create') {
                 hideAll();
                 els.createView.classList.remove('hidden');
-            } else if (mode === 'analysis') {
-                hideAll();
-                els.analysisView.classList.remove('hidden');
             }
         }
 
@@ -632,413 +741,6 @@
                 console.error(e);
                 els.eventGrid.innerHTML = `<tr><td colspan="5" class="empty-cell">${e.message}</td></tr>`;
             }
-        }
-
-        async function fetchAnalysis() {
-            if (state.view !== 'analysis') return;
-            if (els.analysisContainer) {
-                els.analysisContainer.innerHTML = '<div class="loading-state">Loading maturity insights...</div>';
-            }
-            try {
-                const data = await requestJSON('/api/analysis');
-                lastAnalysisPayload = data;
-                renderAnalysis(data);
-            } catch (e) {
-                console.error(e);
-                if (els.analysisContainer) {
-                    els.analysisContainer.innerHTML = `<div class="error-state">Unable to load analysis: ${escapeHtml(e.message)}</div>`;
-                }
-                if (els.analysisUpdated) {
-                    els.analysisUpdated.textContent = 'Error';
-                }
-            }
-        }
-
-        async function fetchClusterAnalysis() {
-            if (state.view !== 'analysis') return;
-            if (els.clusterAnalysisContainer) {
-                els.clusterAnalysisContainer.innerHTML = '<div class="loading-state">Cluster analysis bekleniyor...</div>';
-            }
-            try {
-                const url = `/api/cluster/analysis?cluster=${encodeURIComponent(state.cluster)}`;
-                const data = await requestJSON(url);
-                lastClusterAnalysis = data;
-                renderClusterAnalysis(data);
-            } catch (e) {
-                console.error(e);
-                if (els.clusterAnalysisContainer) {
-                    els.clusterAnalysisContainer.innerHTML = `<div class="error-state">Cluster analizi alınamadı: ${escapeHtml(e.message)}</div>`;
-                }
-                if (els.clusterAnalysisUpdated) {
-                    els.clusterAnalysisUpdated.textContent = 'Error';
-                }
-            }
-        }
-
-        async function fetchMaturityReport() {
-            if (state.view !== 'analysis') return;
-            if (els.maturityReportContainer) {
-                els.maturityReportContainer.innerHTML = '<div class="loading-state">Maturity report hazırlanıyor...</div>';
-            }
-            try {
-                const url = `/api/maturity/report?cluster=${encodeURIComponent(state.cluster)}&env=prod`;
-                const data = await requestJSON(url);
-                renderMaturityReport(data);
-            } catch (e) {
-                console.error(e);
-                if (els.maturityReportContainer) {
-                    els.maturityReportContainer.innerHTML = `<div class="error-state">Maturity report alınamadı: ${escapeHtml(e.message)}</div>`;
-                }
-                if (els.maturityReportUpdated) {
-                    els.maturityReportUpdated.textContent = 'Error';
-                }
-            }
-        }
-
-        async function fetchScore() {
-            if (state.view !== 'analysis') return;
-            if (els.scoreContainer) {
-                els.scoreContainer.innerHTML = '<div class="loading-state">Skor hesaplanıyor...</div>';
-            }
-            try {
-                const url = `/api/cluster/score?cluster=${encodeURIComponent(state.cluster)}`;
-                const data = await requestJSON(url);
-                lastScore = data;
-                renderScore(data);
-            } catch (e) {
-                console.error(e);
-                if (els.scoreContainer) {
-                    els.scoreContainer.innerHTML = `<div class="error-state">Skor hesaplanamadı: ${escapeHtml(e.message)}</div>`;
-                }
-                if (els.scoreUpdated) {
-                    els.scoreUpdated.textContent = 'Error';
-                }
-            }
-        }
-
-        function renderMaturityReport(data) {
-            if (!els.maturityReportContainer) return;
-            if (els.maturityReportUpdated) {
-                const ts = data && data.generatedAt ? formatTimestamp(data.generatedAt) : '—';
-                els.maturityReportUpdated.textContent = ts;
-            }
-            const headings = (data && Array.isArray(data.headings)) ? data.headings : [];
-            if (headings.length === 0) {
-                els.maturityReportContainer.innerHTML = '<div class="empty-state">Report verisi yok.</div>';
-                return;
-            }
-
-            const fragment = document.createDocumentFragment();
-            const avgCard = document.createElement('div');
-            avgCard.className = `analysis-card ${levelClass(data.averageLevel)}`;
-            avgCard.innerHTML = `
-                <div class="analysis-card-header">
-                    <span>Average Level</span>
-                    <strong>${escapeHtml(data.averageLevel || '—')}</strong>
-                </div>
-                <div class="analysis-card-body">
-                    <div>Cluster: <strong>${escapeHtml(data.cluster || state.cluster)}</strong></div>
-                </div>
-            `;
-            fragment.appendChild(avgCard);
-
-            const table = document.createElement('table');
-            table.className = 'analysis-table';
-            table.innerHTML = `
-                <thead>
-                    <tr>
-                        <th>Başlık</th>
-                        <th>Current</th>
-                        <th>Target</th>
-                        <th>Evidence / Missing</th>
-                    </tr>
-                </thead>
-            `;
-            const tbody = document.createElement('tbody');
-            headings.forEach(h => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${escapeHtml(h.title)}</td>
-                    <td>${levelCellHTML(h.currentLevel, h.targetLevel)}</td>
-                    <td>${escapeHtml(h.targetLevel || '—')}</td>
-                    <td>
-                        ${Array.isArray(h.evidence) && h.evidence.length ? `<div><strong>Evidence:</strong> ${h.evidence.map(escapeHtml).join(' | ')}</div>` : ''}
-                        ${Array.isArray(h.missing) && h.missing.length ? `<div><strong>Missing:</strong> ${h.missing.map(escapeHtml).join(' | ')}</div>` : ''}
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            table.appendChild(tbody);
-            fragment.appendChild(table);
-
-            if (data.warnings && data.warnings.length > 0) {
-                const warnBox = document.createElement('div');
-                warnBox.className = 'analysis-warning';
-                warnBox.innerHTML = `<strong>Uyarılar:</strong> ${escapeHtml(data.warnings.join(' | '))}`;
-                fragment.appendChild(warnBox);
-            }
-
-            els.maturityReportContainer.innerHTML = '';
-            els.maturityReportContainer.appendChild(fragment);
-        }
-
-        function renderAnalysis(payload) {
-            if (!els.analysisContainer) return;
-            const rows = payload && Array.isArray(payload.rows) ? payload.rows : [];
-            if (els.analysisUpdated) {
-                const ts = payload && payload.generatedAt ? formatTimestamp(payload.generatedAt) : '—';
-                els.analysisUpdated.textContent = ts;
-            }
-
-            if (rows.length === 0) {
-                els.analysisContainer.innerHTML = '<div class="empty-state">Analysis data not found.</div>';
-                return;
-            }
-
-            const fragment = document.createDocumentFragment();
-            const summaryRow = rows.find(r => (r.title || '').toLowerCase().includes('average level'));
-            const detailRows = rows;
-
-            if (summaryRow) {
-                const summaryGrid = document.createElement('div');
-                summaryGrid.className = 'analysis-summary-grid';
-                [
-                    { label: 'Prod', levelKey: 'prodLevel', targetKey: 'prodTarget' },
-                    { label: 'Staging', levelKey: 'stagingLevel', targetKey: 'stagingTarget' },
-                    { label: 'Dev', levelKey: 'devLevel', targetKey: 'devTarget' },
-                ].forEach(env => {
-                    const card = document.createElement('div');
-                    card.className = `analysis-card ${levelStatusClass(summaryRow[env.levelKey], summaryRow[env.targetKey])}`;
-                    card.innerHTML = `
-                        <div class="analysis-card-header">
-                            <span>${env.label}</span>
-                            <strong>${escapeHtml(summaryRow[env.levelKey] || '-')}</strong>
-                        </div>
-                        <div class="analysis-card-body">
-                            <div>Target: <strong>${escapeHtml(summaryRow[env.targetKey] || '-')}</strong></div>
-                            <div class="analysis-card-status">${escapeHtml(describeLevelDelta(summaryRow[env.levelKey], summaryRow[env.targetKey]))}</div>
-                        </div>
-                    `;
-                    summaryGrid.appendChild(card);
-                });
-                fragment.appendChild(summaryGrid);
-            }
-
-            const table = document.createElement('table');
-            table.className = 'analysis-table';
-            table.innerHTML = `
-                <thead>
-                    <tr>
-                        <th>Başlık</th>
-                        <th>Prod Readiness</th>
-                        <th>Staging Readiness</th>
-                        <th>Dev Readiness</th>
-                    </tr>
-                </thead>
-            `;
-            const tbody = document.createElement('tbody');
-            detailRows.forEach(row => {
-                const tr = document.createElement('tr');
-                const lowerTitle = (row.title || '').toLowerCase();
-                if (lowerTitle.includes('average level')) {
-                    tr.classList.add('analysis-row-highlight');
-                }
-                tr.innerHTML = `
-                    <td>${escapeHtml(row.title)}</td>
-                    <td>${levelCellHTML(row.prodLevel, row.prodTarget)}</td>
-                    <td>${levelCellHTML(row.stagingLevel, row.stagingTarget)}</td>
-                    <td>${levelCellHTML(row.devLevel, row.devTarget)}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-            table.appendChild(tbody);
-            fragment.appendChild(table);
-
-            const note = document.createElement('p');
-            note.className = 'analysis-note';
-            note.textContent = 'Data synced from test.md → COMPOSITE ASSESSMENT MATRIX. Update that file to refresh the heatmap.';
-            fragment.appendChild(note);
-
-            els.analysisContainer.innerHTML = '';
-            els.analysisContainer.appendChild(fragment);
-        }
-
-        function renderClusterAnalysis(payload) {
-            if (!els.clusterAnalysisContainer) return;
-            if (els.clusterAnalysisUpdated) {
-                const ts = payload && payload.generatedAt ? formatTimestamp(payload.generatedAt) : '—';
-                els.clusterAnalysisUpdated.textContent = ts;
-            }
-
-            if (!payload || typeof payload !== 'object') {
-                els.clusterAnalysisContainer.innerHTML = '<div class="empty-state">Cluster analizi yok.</div>';
-                return;
-            }
-
-            const frag = document.createDocumentFragment();
-
-            // HA + Node + Network cards
-            const topGrid = document.createElement('div');
-            topGrid.className = 'analysis-summary-grid';
-            topGrid.appendChild(buildSimpleCard('HA / Nodes', [
-                `Control-Plane: ${payload.nodes?.controlPlanes || 0}`,
-                `Zones: ${(payload.nodes?.zones || []).join(', ') || '—'}`,
-                `HA: ${payload.nodes?.ha ? 'Evet' : 'Hayır'}`,
-            ], payload.nodes?.ha ? 'level-good' : 'level-warning'));
-            topGrid.appendChild(buildSimpleCard('CNI', [
-                payload.nodes?.cni || 'Bilinmiyor'
-            ], payload.nodes?.cni ? 'level-good' : 'level-warning'));
-            topGrid.appendChild(buildSimpleCard('NetworkPolicy', [
-                `Policy sayısı: ${payload.network?.networkPolicies || 0}`,
-                `Default-deny NS: ${(payload.network?.defaultDenyNamespaces || []).join(', ') || '—'}`
-            ], (payload.network?.networkPolicies || 0) > 0 ? 'level-good' : 'level-risk'));
-            frag.appendChild(topGrid);
-
-            // Ingress + Security + Observability
-            const midGrid = document.createElement('div');
-            midGrid.className = 'analysis-summary-grid';
-            midGrid.appendChild(buildListCard('Ingress Controller', payload.network?.ingresses || [], 'level-neutral'));
-            midGrid.appendChild(buildListCard('Security', [
-                `cert-manager: ${payload.security?.certManager ? 'Var' : 'Yok'}`,
-                `PSA enforce: ${(payload.security?.psaEnforce || []).join(', ') || '—'}`
-            ], payload.security?.certManager ? 'level-good' : 'level-warning'));
-            midGrid.appendChild(buildListCard('Observability', [
-                `Prometheus: ${flagText(payload.observability?.prometheus)}`,
-                `Alertmanager: ${flagText(payload.observability?.alertmanager)}`,
-                `Grafana: ${flagText(payload.observability?.grafana)}`,
-                `kube-state-metrics: ${flagText(payload.observability?.kubeStateMetrics)}`,
-                `EFK: ${flagText(payload.observability?.efk)}`
-            ], payload.observability?.prometheus ? 'level-good' : 'level-warning'));
-            frag.appendChild(midGrid);
-
-            // GitOps + Backup + Autoscaling
-            const bottomGrid = document.createElement('div');
-            bottomGrid.className = 'analysis-summary-grid';
-            bottomGrid.appendChild(buildSimpleCard('GitOps', [
-                `ArgoCD: ${flagText(payload.gitops?.argocd)}`
-            ], payload.gitops?.argocd ? 'level-good' : 'level-warning'));
-            bottomGrid.appendChild(buildSimpleCard('Backup', [
-                `Velero: ${flagText(payload.backup?.velero)}`
-            ], payload.backup?.velero ? 'level-good' : 'level-warning'));
-            bottomGrid.appendChild(buildListCard('Autoscaling / Quota', [
-                `HPA sayısı: ${payload.workload?.hpaCount ?? payload.workload?.hpas ?? 0}`,
-                `Autoscaler: ${(payload.workload?.autoscalers || []).join(', ') || '—'}`,
-                `ResourceQuota NS: ${payload.workload?.resourceQuotaNamespaces || 0}`
-            ], (payload.workload?.hpaCount || payload.workload?.hpas || 0) > 0 ? 'level-good' : 'level-warning'));
-            frag.appendChild(bottomGrid);
-
-            if (payload.warnings && payload.warnings.length > 0) {
-                const warnBox = document.createElement('div');
-                warnBox.className = 'analysis-warning';
-                warnBox.innerHTML = `<strong>Uyarılar:</strong> ${escapeHtml(payload.warnings.join(' | '))}`;
-                frag.appendChild(warnBox);
-            }
-
-            els.clusterAnalysisContainer.innerHTML = '';
-            els.clusterAnalysisContainer.appendChild(frag);
-        }
-
-        function buildSimpleCard(title, lines, statusClass = 'level-neutral') {
-            const card = document.createElement('div');
-            card.className = `analysis-card ${statusClass}`;
-            card.innerHTML = `
-                <div class="analysis-card-header">
-                    <span>${escapeHtml(title)}</span>
-                </div>
-                <div class="analysis-card-body">
-                    ${lines.map(l => `<div>${escapeHtml(l)}</div>`).join('')}
-                </div>
-            `;
-            return card;
-        }
-
-        function buildListCard(title, lines, statusClass = 'level-neutral') {
-            return buildSimpleCard(title, Array.isArray(lines) ? lines : [], statusClass);
-        }
-
-        function flagText(val) {
-            if (val === true) return 'Var';
-            if (val === false) return 'Yok';
-            return 'Bilinmiyor';
-        }
-        function renderScore(data) {
-            if (!els.scoreContainer) return;
-            if (els.scoreUpdated) {
-                const ts = data && data.generatedAt ? formatTimestamp(data.generatedAt) : '—';
-                els.scoreUpdated.textContent = ts;
-            }
-            const scores = (data && Array.isArray(data.scores)) ? data.scores : [];
-            if (scores.length === 0) {
-                els.scoreContainer.innerHTML = '<div class="empty-state">Skor verisi yok.</div>';
-                return;
-            }
-            const wrap = document.createElement('div');
-            wrap.className = 'score-grid';
-            scores.forEach(item => {
-                const card = document.createElement('div');
-                card.className = `analysis-card ${levelClass(item.level)}`;
-                card.innerHTML = `
-                    <div class="analysis-card-header">
-                        <span>${escapeHtml(item.category || '')}</span>
-                        <strong>${escapeHtml(item.level || '-')}</strong>
-                    </div>
-                    <div class="analysis-card-body">
-                        <div>${escapeHtml(item.rationale || '')}</div>
-                        ${Array.isArray(item.missing) && item.missing.length > 0 ? `<div class="missing-list">${item.missing.map(m => `• ${escapeHtml(m)}`).join('<br>')}</div>` : ''}
-                    </div>
-                `;
-                wrap.appendChild(card);
-            });
-            if (data.warnings && data.warnings.length > 0) {
-                const warnBox = document.createElement('div');
-                warnBox.className = 'analysis-warning';
-                warnBox.innerHTML = `<strong>Uyarılar:</strong> ${escapeHtml(data.warnings.join(' | '))}`;
-                wrap.appendChild(warnBox);
-            }
-            els.scoreContainer.innerHTML = '';
-            els.scoreContainer.appendChild(wrap);
-        }
-
-        function levelClass(level) {
-            const v = (level || '').toUpperCase();
-            if (v === 'L4' || v === 'L5') return 'level-good';
-            if (v === 'L3') return 'level-warning';
-            return 'level-risk';
-        }
-
-        function levelCellHTML(current, target) {
-            return `
-                <div class="level-cell ${levelStatusClass(current, target)}">
-                    <div class="level-current">${escapeHtml(current || '-')}</div>
-                    <div class="level-target">Target ${escapeHtml(target || '-')}</div>
-                    <div class="level-gap">${escapeHtml(describeLevelDelta(current, target))}</div>
-                </div>
-            `;
-        }
-
-        function levelStatusClass(current, target) {
-            const currentVal = levelToNumber(current);
-            const targetVal = levelToNumber(target);
-            if (currentVal === null || targetVal === null) return 'level-neutral';
-            if (currentVal >= targetVal) return 'level-good';
-            if (targetVal - currentVal === 1) return 'level-warning';
-            return 'level-risk';
-        }
-
-        function levelToNumber(val) {
-            if (!val) return null;
-            const match = val.match(/L(\d)/i);
-            return match ? parseInt(match[1], 10) : null;
-        }
-
-        function describeLevelDelta(current, target) {
-            const currentVal = levelToNumber(current);
-            const targetVal = levelToNumber(target);
-            if (currentVal === null || targetVal === null) return 'Target TBD';
-            if (currentVal >= targetVal) return 'On target';
-            const diff = targetVal - currentVal;
-            if (diff === 1) return 'Almost there';
-            return `${diff} levels behind`;
         }
 
         function formatTimestamp(ts) {
@@ -1322,8 +1024,8 @@
         function refreshAll() {
             els.refreshBtn.classList.add('rotating');
             if (state.view === 'analysis') {
-                Promise.all([fetchAnalysis(), fetchMaturityReport(), fetchClusterAnalysis(), fetchScore()])
-                    .finally(() => setTimeout(() => els.refreshBtn.classList.remove('rotating'), 500));
+                Promise.resolve(loadMaturityEvidence())
+                    .finally(() => setTimeout(() => els.refreshBtn.classList.remove('rotating'), 250));
                 return;
             }
             const promises = [fetchResources(), fetchEvents()];
@@ -1342,7 +1044,8 @@
 
         function updateBreadcrumbs() {
             els.crumbCluster.textContent = state.cluster;
-            els.crumbResource.textContent = document.querySelector(`.nav-item[data-type="${state.resourceType}"]`).textContent;
+            const item = document.querySelector(`.nav-item[data-type="${state.resourceType}"]`);
+            els.crumbResource.textContent = item ? item.textContent : state.resourceType;
         }
 
         // Listeners
@@ -1353,18 +1056,18 @@
                 item.classList.add('active');
 
                 const type = item.dataset.type;
-                if (type === 'topology') {
+                if (type === 'maturity') {
+                    state.resourceType = type;
+                    setView('analysis');
+                    updateBreadcrumbs();
+                    loadMaturityCriteria();
+                } else if (type === 'topology') {
                     setView('graph');
                     els.crumbResource.textContent = "Topology";
                 } else if (type === 'create') {
                     setView('create');
                     els.crumbResource.textContent = "Create Resource";
                     initCreatePreview();
-                } else if (type === 'analysis') {
-                    state.resourceType = type;
-                    setView('analysis');
-                    els.crumbResource.textContent = item.textContent.trim();
-                    refreshAll();
                 } else {
                     state.resourceType = type;
                     setView('list');
@@ -1389,7 +1092,19 @@
 
         els.clusterSelect.addEventListener('change', (e) => {
             state.cluster = e.target.value;
-            fetchNamespaces().then(refreshAll);
+            fetchNamespaces().then(() => {
+                if (state.view === 'analysis') {
+                    maturityLastReport = null;
+                    maturityLastEvidence = null;
+                    restoreMaturityAnswers();
+                    if (els.maturityEvidence) {
+                        els.maturityEvidence.classList.add('empty');
+                        els.maturityEvidence.textContent = 'Henüz yüklenmedi.';
+                    }
+                    loadMaturityCriteria().then(loadMaturityEvidence);
+                }
+                else refreshAll();
+            });
             updateBreadcrumbs();
         });
 
@@ -1399,6 +1114,789 @@
         });
 
         els.refreshBtn.addEventListener('click', refreshAll);
+
+        function setActiveNav(type) {
+            const item = document.querySelector(`.nav-item[data-type="${type}"]`);
+            if (!item) return;
+            document.querySelector('.nav-item.active')?.classList.remove('active');
+            item.classList.add('active');
+        }
+
+        let maturityCriteriaDoc = null;
+        let maturityLastReport = null;
+        let maturityLastEvidence = null;
+        let maturityAnswers = {};
+        let maturityWizardQuestions = [];
+        let maturityWizardIndex = 0;
+        let maturityWizardSelections = {};
+
+        async function loadMaturityCriteria() {
+            if (!els.maturityStatus || !els.maturityResults) return;
+            els.maturityStatus.textContent = 'Loading criteria...';
+            els.maturityStatus.classList.remove('error', 'success');
+            try {
+                maturityCriteriaDoc = await requestJSON('/api/maturity/criteria');
+                els.maturityStatus.textContent = `Loaded ${maturityCriteriaDoc.categories?.length || 0} categories.`;
+                els.maturityStatus.classList.add('success');
+                renderMaturityUI(maturityCriteriaDoc, maturityLastReport);
+            } catch (e) {
+                els.maturityStatus.textContent = `Criteria load failed: ${e.message}`;
+                els.maturityStatus.classList.add('error');
+            }
+        }
+
+        function renderMaturityUI(doc, report) {
+            if (!doc) return;
+            const categories = doc.categories || [];
+            const query = (els.maturitySearch?.value || '').trim().toLowerCase();
+            const scoreByKey = new Map();
+            if (report && report.criteriaScores) {
+                report.criteriaScores.forEach(s => scoreByKey.set(s.key, s));
+            }
+            const inferredByKey = new Map();
+            if (maturityLastEvidence && Array.isArray(maturityLastEvidence.inferredScores)) {
+                maturityLastEvidence.inferredScores.forEach(s => inferredByKey.set(s.key, s));
+            }
+
+            renderMaturitySummary(report);
+            const precheckSummary = (!report && maturityCriteriaDoc && maturityLastEvidence && Array.isArray(maturityLastEvidence.inferredScores))
+                ? computeSummaryFromScores(maturityCriteriaDoc, maturityLastEvidence.inferredScores)
+                : null;
+            const scoreSource = report || precheckSummary;
+
+            const html = categories.map(cat => {
+                const crit = cat.criteria || [];
+                const filtered = query
+                    ? crit.filter(c => (c.name || '').toLowerCase().includes(query))
+                    : crit;
+                if (filtered.length === 0) return '';
+
+                const catScore = getCategoryScore(scoreSource, cat.title);
+                const catBadge = catScore ? `<span class="maturity-chip level-${Math.round(catScore)}">L${catScore.toFixed(1)}</span>` : `<span class="maturity-chip level-0">—</span>`;
+
+                const rows = filtered.map(cr => {
+                    const s = scoreByKey.get(cr.key);
+                    const inf = inferredByKey.get(cr.key);
+                    const base = s && (s.level || 0) > 0 ? s : (inf && (inf.level || 0) > 0 ? inf : null);
+                    const levelNum = base ? (base.level || 0) : 0;
+                    const confidence = base && typeof base.confidence === 'number' ? base.confidence : 0;
+                    const confPct = Math.round(confidence * 100);
+                    const rationale = base && base.rationale ? escapeHTML(base.rationale) : '';
+                    const evidence = base && base.evidence && base.evidence.length ? escapeHTML(base.evidence.slice(0, 3).join(' • ')) : '';
+                    let missing = (s && Array.isArray(s.missing) && s.missing.length) ? s.missing : [];
+                    if (!missing.length) {
+                        missing = defaultQuestionsForCriterion(cr);
+                    }
+                    const answer = (maturityAnswers && cr.key in maturityAnswers) ? (maturityAnswers[cr.key] || '') : '';
+                    const hasAnswer = !!String(answer).trim();
+                    const detailsId = `maturity-details-${cr.key}`;
+                    return `
+                        <div class="maturity-row">
+                            <div class="maturity-row-main">
+                                <div class="maturity-row-title">${escapeHTML(cr.name)}</div>
+                                ${rationale ? `<div class="maturity-row-sub">${rationale}</div>` : `<div class="maturity-row-sub muted">Skor yok. Analyze çalıştırabilir veya bilgi ekleyebilirsiniz.</div>`}
+                                ${evidence ? `<div class="maturity-row-evidence">${evidence}</div>` : ``}
+                                <div class="maturity-row-actions">
+                                    <button class="maturity-link" type="button" data-toggle="${escapeHTML(detailsId)}">${hasAnswer ? 'Cevabı düzenle' : 'Bilgi ekle'}</button>
+                                </div>
+                                <div class="maturity-details hidden" id="${escapeHTML(detailsId)}">
+                                    ${missing.length ? `
+                                        <div class="maturity-details-block">
+                                            <div class="maturity-details-title">Sorular</div>
+                                            <ul class="maturity-details-list">
+                                                ${missing.slice(0, 6).map(q => `<li>${escapeHTML(q)}</li>`).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ``}
+                                    <div class="maturity-details-block">
+                                        <div class="maturity-details-title">Cevabın (opsiyonel)</div>
+                                        <textarea class="maturity-answer" data-answer-key="${escapeHTML(cr.key)}" placeholder="Bu kriterin mevcut durumunu ve kanıtları yaz (link/komut çıktısı/ekip süreci...)">${escapeHTML(answer)}</textarea>
+                                        <div class="maturity-details-actions">
+                                            <button class="maturity-btn" type="button" data-save-answer="${escapeHTML(cr.key)}">Kaydet</button>
+                                            <button class="maturity-btn" type="button" data-clear-answer="${escapeHTML(cr.key)}">Temizle</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="maturity-row-metrics">
+                                <div class="maturity-chip level-${levelNum}">${levelNum ? `L${levelNum}` : '—'}</div>
+                                <div class="maturity-conf" title="Confidence">
+                                    <div class="maturity-conf-bar"><span style="width:${confPct}%"></span></div>
+                                    <div class="maturity-conf-text">${levelNum ? `${confPct}%` : '—'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <section class="maturity-section">
+                        <div class="maturity-section-header">
+                            <div class="maturity-section-title">${escapeHTML(cat.title || cat.id || 'Category')}</div>
+                            <div class="maturity-section-meta">
+                                <span class="maturity-muted">${filtered.length} kriter</span>
+                                ${catBadge}
+                            </div>
+                        </div>
+                        <div class="maturity-section-body">
+                            ${rows}
+                        </div>
+                    </section>
+                `;
+            }).join('');
+
+            els.maturityResults.innerHTML = html || `<div class="maturity-empty">Eşleşen kriter bulunamadı.</div>`;
+            attachMaturityDetailHandlers();
+        }
+
+        function escapeHTML(str) {
+            return String(str || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function defaultQuestionsForCriterion(cr) {
+            const out = [
+                'Bu kriter için mevcut durum hangi seviye? (L1–L5 seçin veya kısaca açıklayın)',
+                'Kanıt var mı? (ör. YAML/komut çıktısı/runbook/ADR linki)'
+            ];
+            const levels = Array.isArray(cr.levels) ? cr.levels : [];
+            if (levels.length === 5) {
+                const parts = levels.map((v, i) => {
+                    const text = String(v || '').replaceAll('\\n', ' ').trim();
+                    if (!text) return null;
+                    return `L${i + 1}=${truncateText(text, 70)}`;
+                }).filter(Boolean);
+                if (parts.length) out.push('Seviye seçenekleri (özet): ' + parts.join(' | '));
+            }
+            const name = String(cr.name || '').toLowerCase();
+            const label = String(cr.name || '').trim() || 'Bu kriter';
+            if (label) {
+                out.push(`${label} kriteri için hangi komutlar/raporlar/kanıtlar mevcut?`);
+            }
+            const cmdSuggestions = suggestCommandsForCriterion(name);
+            if (cmdSuggestions.length) {
+                out.push(`Bu kriteri doğrulamak için şu komutlardan birinin çıktısını ekleyin: ${cmdSuggestions.map(c => `\`${c}\``).join(' / ')}`);
+            }
+            // Security odaklı ek sorular
+            if (name === 'service account policy') {
+                out.push('Uygulamalar default ServiceAccount mı kullanıyor, yoksa her uygulama için ayrı SA var mı?');
+                out.push('Default SA için `automountServiceAccountToken` kapalı mı? Hangi namespace’lerde?');
+            } else if (name === 'user access model') {
+                out.push('Cluster-admin rolü kimlerde var? (takım/kişi listesi)');
+                out.push('Prod/stage/dev için ayrı RBAC mi var, yoksa ortak mı?');
+            } else if (name === 'privileged access') {
+                out.push('Kök/privileged erişimler nasıl veriliyor? Sadece break-glass mı, yoksa günlük işlerde de mi kullanılıyor?');
+                out.push('sudo/privileged pod çalıştırmak için onay süreci var mı?');
+            } else if (name === 'approval process') {
+                out.push('Prod’a deploy/konfig değişikliği için kim onay veriyor? Süreç tool bazlı mı (ör. Git PR) yoksa manuel mi?');
+            } else if (name === 'audit & review') {
+                out.push('RBAC/policy review’leri hangi sıklıkta yapılıyor (yapılıyorsa)?');
+                out.push('Audit logları nerede tutuluyor, kimler erişebiliyor?');
+            } else if (name === 'initial audit') {
+                out.push('Son CIS/kube-bench/skaner çıktısı var mı? Özetini buraya koyabilir veya link verebilirsiniz.');
+            } else if (name === 'api server config') {
+                out.push('API server için audit-policy, anonymous access, insecure port gibi ayarlarınızın özetini yazın.');
+                out.push('Apiserver config’i Git ile mi yönetiliyor yoksa manuel mü?');
+            } else if (name === 'etcd encryption') {
+                out.push('etcd için at-rest encryption aktif mi? (apiserver flag veya dokümantasyon linki).');
+            } else if (name === 'kubelet hardening') {
+                out.push('Kubelet için read-only port kapalı mı, kubelet authz/authn ayarları nasıl?');
+            } else if (name === 'pod security') {
+                out.push('Prod namespace’lerde hangi Pod Security level enforce ediliyor (baseline/restricted)?');
+                out.push('PSA/PSP/OPA/ Kyverno ile zorunlu kıldığınız önemli kurallar neler?');
+            } else if (name === 'remediation') {
+                out.push('Policy ihlali veya vulnerability bulununca otomatik düzeltme var mı, yoksa manuel mi? Örnek süreç yazın.');
+            } else if (name === 'image scanning') {
+                out.push('İmajlar hangi aşamada taranıyor (CI, registry, runtime)? Hangi tool kullanılıyor (Trivy, Grype, Aqua vb.)?');
+            } else if (name === 'secrets mgmt') {
+                out.push('Kritik secret’lar Kubernetes Secret mı, yoksa external (Vault, SOPS, SealedSecrets, KMS) mı?');
+            } else if (name === 'image pull policy') {
+                out.push('Prod ortamda `imagePullPolicy` için genel yaklaşımınız nedir (Always/IfNotPresent)? Tag stratejinizi özetleyin.');
+            }
+            if (name === 'rto/rpo tanimi' || name === 'rto/rpo tanımı') {
+                out.push('RTO ve RPO hedefleri nerede dokümante ediliyor? Hangi ortamlar için kaç dakika/saat hedefi var?');
+                out.push('Backup aracı (Velero veya benzeri) bu hedefleri nasıl karşılıyor? Schedule çıktısı veya policy linki ekleyin.');
+            } else if (name === 'data retention') {
+                out.push('Log/data retention policy\'niz nedir? Saklama süresi, tier ve storage sınıfları nelerdir?');
+                out.push('Retention ayarları Git ile mi yönetiliyor, yoksa manuel mi? Hangi storage sınıflarından faydalanıyorsunuz?');
+            } else if (name === 'log retention') {
+                out.push('Log retention politikası ne kadar sürüyor? (örneğin 30 gün, 90 gün vs.)');
+                out.push('Retention kontrolü nerede tutuluyor (Loki, Elasticsearch, Cloud)? Örnek komut veya dashboard linki paylaşın.');
+            } else if (name === 'audit log') {
+                out.push('Audit loglar nereye gönderiliyor? (Loki, Elasticsearch, Cloud Audit Logging vb.)');
+                out.push('Kimler audit loglara erişebiliyor ve retention/silme politikası nedir?');
+            }
+            if (name === 'backup location') {
+                out.push('Velero BackupStorageLocation (veya başka storage tanımı) nerede? Hangi hedef (s3, gcs, azure) kullanılıyor?');
+                out.push('Location için bucket/container, region, encryption bilgisi var mı?');
+            } else if (name === 'backup frequency') {
+                out.push('Backup schedule’lar nasıl organizedir? (günlük, saatlik, namespace bazlı vs.)');
+            } else if (name === 'backup encryption') {
+                out.push('Storage location için encryption/KMS ayarlarını paylaşın (kmsKeyId, encryption key).');
+                out.push('Backup içeriği at-rest şifreli mi? Hangi araçla?');
+            } else if (name === 'backup scope') {
+                out.push('Hangi namespace/cluster component’lar backup alınıyor? Velero schedule/backup legend’i var mı?');
+            } else if (name === 'restore testing') {
+                out.push('Restore testi yaptınız mı? Hangi backup/namespace ile, hangi zaman diliminde?');
+            } else if (name === 'restore proc') {
+                out.push('Restore prosedürü adım adım nedir? (Velero restore, manuel restore vs.)');
+            }
+            if (name === 'utilization analysis') {
+                out.push('Utilization analizi için hangi metric stack mevcut (Prometheus, kube-state-metrics vb.)?');
+                out.push('Hangi ekipler veya dashboard’lar bu metrikleri izliyor?');
+            } else if (name === 'over-provisioning') {
+                out.push('ResourceQuota/LimitRange politikaları var mı? Hangi namespace’ler için uygulanıyor?');
+                out.push('Kaynakları kısıtlamak için hangi süreçler kullanılıyor? (ör. GitOps, policy)');
+            } else if (name === 'auto rightsizing') {
+                out.push('HPA/Cluster autoscaler mutlaka var mı? Hangi deployment/HPA bu sürece dahil?');
+                out.push('Rightsizing kararları nerede dokümante ediliyor veya otomasyonla uygulanıyor?');
+            } else if (name === 'cost reporting') {
+                out.push('Maliyet raporlamasını hangi araçlar hazırlıyor? (Grafana dashboard, Cloud billing, vb.)');
+                out.push('Per-application/per-cluster raporlar nerede saklanıyor?');
+            } else if (name === 'instance strategy') {
+                out.push('Node pool stratejiniz ne? (pool isimleri, çalışma saatleri, özel etiketler)');
+                out.push('Özel donanım/spot/preemptible node kullanımı nasıl planlanıyor?');
+            } else if (name === 'spot usage') {
+                out.push('Spot/preemptible node’lar cluster’da var mı? Hangi label/taint ile tanımlanıyorlar?');
+                out.push('Spot node kullanımını hangi servisler tüketiyor?');
+            } else if (name === 'node pool strategy') {
+                out.push('Node pool isimleri ve amaçlarını açıklayın (prod, staging, GPU, vb.).');
+                out.push('Node pool şeması/etiketleri nerede saklanıyor?');
+            } else if (name === 'cost savings') {
+                out.push('Maliyet optimizasyonu için hangi inisiyatifler var? (e.g. spot, rightsizing, autoscaling)');
+            } else if (name === 'cost allocation') {
+                out.push('Maliyetleri namespace/label bazında nasıl ayırıyorsunuz?');
+            } else if (name === 'budget control') {
+                out.push('Bütçe uyarıları nerede tanımlı? (Grafana alert, Cloud budgets, pagerduty vb.)');
+            } else if (name === 'finops culture') {
+                out.push('FinOps ekip/başlıkları nasıl organize? (per-app, center of excellence)?');
+            } else if (name === 'savings tracking') {
+                out.push('Tasarruf hedeflerini kim takip ediyor? (dashboard, runbook, vs.)');
+            }
+            if (name === 'deployment') {
+                out.push('Deployment süreciniz otomatik mi? Hangi tool(lar) ile tetikleniyor?');
+            } else if (name === 'git structure') {
+                out.push('Deployment repo yapınız nasıl organize (monorepo, team dirs, vs.)?');
+            } else if (name === 'rollback') {
+                out.push('Rollback prosedürü ne? Hangi araçlar veya playbooklar kullanılıyor?');
+            } else if (name === 'audit trail') {
+                out.push('Audit verisi nerede saklanıyor? (events, Cloud Audit Logging, vs.)');
+                out.push('Kimler audit trail raporlarını tüketiyor?');
+            } else if (name === 'helm usage') {
+                out.push('Helm release/values yönetimi nasıl yapılır? (helmfile, helm3, custom scripts)');
+            } else if (name === 'values mgmt') {
+                out.push('Values/secret yönetimi nasıl? (SealedSecrets, external secrets, etc.)');
+            } else if (name === 'chart testing') {
+                out.push('Chart’larınız CI/CD’de nasıl test ediliyor (helm lint, chart-testing, vs.)?');
+            } else if (name === 'release mgmt') {
+                out.push('Release planlama/approval süreçleri nasıl işliyor? (ArgoCD/Fleet, approvals)');
+            } else if (name === 'kubectl commands') {
+                out.push('Hangi kubectl komutlarını otomatik veya manuel çalıştırıyorsunuz?');
+                out.push('Pod/cluster düzeyinde sık kullanılan komutlar nelerdir?');
+            } else if (name === 'pod debugging') {
+                out.push('Pod debugging süreci nasıl? (kubectl exec, port-forward, ephemeral debug pod)');
+            } else if (name === 'event analysis') {
+                out.push('Event monitörünüz veya aggregate aracı var mı? (kubectl get events, ELK, Loki)');
+            } else if (name === 'alert system') {
+                out.push('Alert rule’lar nerede tanımlı? Hangi platformu kullanıyorsunuz (PrometheusRule, Cloud Alert)?');
+            } else if (name === 'alert fatigue') {
+                out.push('Alert sayısı nasıl yönetiliyor? (silencing, rate limiting, dedup)');
+            } else if (name === 'on-call runbook') {
+                out.push('On-call runbook dokümantasyonunuz nerede? (wiki, runbook repo, playbook)');
+            } else if (name === 'mttr') {
+                out.push('MTTR hedefi nedir? Hangi araçlarla ölçüyorsunuz?');
+            }
+            return out;
+        }
+
+        function suggestCommandsForCriterion(lowerName) {
+            const name = String(lowerName || '').toLowerCase();
+            const cmds = [];
+            const add = (...items) => items.forEach(i => { if (i && !cmds.includes(i)) cmds.push(i); });
+            if (name.includes('networkpolicy') || name.includes('egress') || name.includes('cilium')) {
+                add('kubectl get networkpolicy -A', 'kubectl get ciliumnetworkpolicies -A', 'kubectl get ciliumclusterwidenetworkpolicies');
+            } else if (name.includes('ingress')) {
+                add('kubectl get ingress -A', 'kubectl get ingressclass', 'kubectl get svc -A');
+            } else if (name.includes('cert') || name.includes('tls')) {
+                add('kubectl get certificates -A', 'kubectl get issuers -A', 'kubectl get clusterissuers');
+            } else if (name.includes('prometheus') || name.includes('metrics') || name.includes('scrape')) {
+                add('kubectl get prometheusrules -A', 'kubectl get servicemonitors -A', 'kubectl get podmonitors -A');
+            } else if (name.includes('grafana') || name.includes('dashboards')) {
+                add('kubectl get deploy -A | grep -i grafana', 'kubectl get svc -A | grep -i grafana');
+            } else if (name.includes('log') || name.includes('loki')) {
+                add('kubectl get deploy -A | grep -i loki', 'kubectl get pods -A | grep -i loki');
+            } else if (name.includes('backup') || name.includes('restore') || name.includes('dr') || name.includes('velero')) {
+                add('kubectl get schedules.velero.io -n velero', 'kubectl get backupstoragelocations.velero.io -n velero -o yaml', 'kubectl get backups.velero.io -A', 'kubectl get restores.velero.io -A');
+            } else if (name.includes('longhorn')) {
+                add('kubectl get backups.longhorn.io -A', 'kubectl get restores.longhorn.io -A', 'kubectl get pods -n longhorn-system');
+            } else if (name.includes('hpa')) {
+                add('kubectl get hpa -A', 'kubectl get deploy -A');
+            } else if (name.includes('resourcequota')) {
+                add('kubectl get resourcequota -A -o yaml');
+            } else if (name.includes('limitrange')) {
+                add('kubectl get limitrange -A -o yaml');
+            } else if (name.includes('service account') || name.includes('rbac') || name.includes('cluster-admin')) {
+                add('kubectl get sa -A', 'kubectl get clusterrolebinding', 'kubectl get rolebinding -A');
+            } else {
+                add('kubectl get all -A', 'kubectl get ns -o yaml');
+            }
+            return cmds.slice(0, 3);
+        }
+
+        async function runMaturityAnalysis() {
+            if (!els.maturityStatus) return;
+            // Guided wizard first (can be skipped inside the wizard).
+            openMaturityWizard();
+        }
+
+        if (els.runMaturityBtn) {
+            els.runMaturityBtn.addEventListener('click', runMaturityAnalysis);
+        }
+        if (els.loadCriteriaBtn) {
+            els.loadCriteriaBtn.addEventListener('click', () => {
+                maturityLastReport = null;
+                loadMaturityCriteria();
+            });
+        }
+
+        if (els.maturitySearch) {
+            els.maturitySearch.addEventListener('input', () => renderMaturityUI(maturityCriteriaDoc, maturityLastReport));
+        }
+
+        if (els.loadEvidenceBtn) {
+            els.loadEvidenceBtn.addEventListener('click', loadMaturityEvidence);
+        }
+
+        async function loadMaturityEvidence() {
+            if (!els.maturityEvidence) return;
+            els.maturityEvidence.classList.remove('empty');
+            els.maturityEvidence.textContent = 'Loading...';
+            try {
+                maturityLastEvidence = await requestJSON(`/api/maturity/evidence?cluster=${encodeURIComponent(state.cluster)}`);
+                renderMaturityEvidence(maturityLastEvidence);
+            } catch (e) {
+                els.maturityEvidence.classList.add('empty');
+                els.maturityEvidence.textContent = `Evidence failed: ${e.message}`;
+            }
+        }
+
+        function renderMaturityEvidence(ev) {
+            if (!els.maturityEvidence) return;
+            if (!ev) {
+                els.maturityEvidence.classList.add('empty');
+                els.maturityEvidence.textContent = 'Henüz yüklenmedi.';
+                return;
+            }
+            const addons = Object.keys(ev.detectedAddons || {}).filter(k => ev.detectedAddons[k]);
+            const zones = (ev.zones || []).join(', ');
+            const kubectlEntries = ev.kubectl ? Object.entries(ev.kubectl) : [];
+            const kubectlErrors = kubectlEntries.filter(([k, v]) => String(v || '').includes('ERROR:'));
+            els.maturityEvidence.innerHTML = `
+                <div class="maturity-evidence-grid">
+                    <div class="maturity-kv"><span>K8s</span><strong>${escapeHTML(ev.kubernetesVersion || '—')}</strong></div>
+                    <div class="maturity-kv"><span>Nodes</span><strong>${ev.nodeCount ?? '—'}</strong></div>
+                    <div class="maturity-kv"><span>Zones</span><strong>${escapeHTML(zones || '—')}</strong></div>
+                    <div class="maturity-kv"><span>Namespaces</span><strong>${ev.namespaceCount ?? '—'}</strong></div>
+                    <div class="maturity-kv"><span>Ingress</span><strong>${ev.ingressCount ?? '—'}</strong></div>
+                    <div class="maturity-kv"><span>NetworkPolicy</span><strong>${ev.networkPolicyCount ?? '—'}</strong></div>
+                </div>
+                ${addons.length ? `<div class="maturity-chips">${addons.slice(0, 10).map(a => `<span class="maturity-chip subtle">${escapeHTML(a)}</span>`).join('')}</div>` : ``}
+                ${kubectlErrors.length ? `
+                    <details class="maturity-kubectl-errors">
+                        <summary>Kubectl errors (${kubectlErrors.length})</summary>
+                        <div class="maturity-kubectl-body">
+                            ${kubectlErrors.slice(0, 6).map(([k, v]) => `<div class="maturity-kubectl-item"><div class="maturity-kubectl-cmd">${escapeHTML(k)}</div><pre>${escapeHTML(truncateText(v, 900))}</pre></div>`).join('')}
+                        </div>
+                    </details>
+                ` : ``}
+            `;
+        }
+
+        function getCategoryScore(report, categoryTitle) {
+            if (!report || !Array.isArray(report.categoryScores)) return null;
+            const found = report.categoryScores.find(c => c.category === categoryTitle);
+            return found && typeof found.level === 'number' ? found.level : null;
+        }
+
+        function renderMaturitySummary(report) {
+            if (!els.maturitySummary || !els.maturityOverallBadge) return;
+            if (!report) {
+                // Show a precheck summary if we have inferredScores from evidence.
+                const inferred = maturityLastEvidence && Array.isArray(maturityLastEvidence.inferredScores)
+                    ? maturityLastEvidence.inferredScores
+                    : [];
+                if (!inferred.length || !maturityCriteriaDoc) {
+                    els.maturityOverallBadge.textContent = '—';
+                    els.maturitySummary.innerHTML = `<div class="maturity-muted">Analyze çalıştırın veya bilgi ekleyin.</div>`;
+                    return;
+                }
+                const summary = computeSummaryFromScores(maturityCriteriaDoc, inferred);
+                els.maturityOverallBadge.textContent = summary ? `L${summary.overallLevel.toFixed(1)}` : '—';
+                els.maturityOverallBadge.className = `maturity-badge ${summary ? `level-${Math.round(summary.overallLevel)}` : 'level-0'}`;
+                const cats = summary ? summary.categoryScores : [];
+                const catRows = cats.slice(0, 10).map(c => {
+                    const lvl = typeof c.level === 'number' ? c.level : 0;
+                    const pct = Math.max(0, Math.min(100, Math.round((lvl / 5) * 100)));
+                    return `
+                        <div class="maturity-score-row">
+                            <div class="maturity-score-title">${escapeHTML(c.category)}</div>
+                            <div class="maturity-score-bar"><span style="width:${pct}%"></span></div>
+                            <div class="maturity-score-val">L${lvl.toFixed(1)}</div>
+                        </div>
+                    `;
+                }).join('');
+                els.maturitySummary.innerHTML = catRows || `<div class="maturity-muted">Precheck skoru yok.</div>`;
+                return;
+            }
+            const overall = typeof report.overallLevel === 'number' ? report.overallLevel : null;
+            els.maturityOverallBadge.textContent = overall ? `L${overall.toFixed(1)}` : '—';
+            els.maturityOverallBadge.className = `maturity-badge ${overall ? `level-${Math.round(overall)}` : 'level-0'}`;
+
+            const cats = Array.isArray(report.categoryScores) ? report.categoryScores : [];
+            const catRows = cats.slice(0, 10).map(c => {
+                const lvl = typeof c.level === 'number' ? c.level : 0;
+                const pct = Math.max(0, Math.min(100, Math.round((lvl / 5) * 100)));
+                return `
+                    <div class="maturity-score-row">
+                        <div class="maturity-score-title">${escapeHTML(c.category)}</div>
+                        <div class="maturity-score-bar"><span style="width:${pct}%"></span></div>
+                        <div class="maturity-score-val">L${lvl.toFixed(1)}</div>
+                    </div>
+                `;
+            }).join('');
+            els.maturitySummary.innerHTML = catRows || `<div class="maturity-muted">Kategori skoru yok.</div>`;
+        }
+
+        function computeSummaryFromScores(doc, scores) {
+            const byCat = new Map();
+            const scoreByKey = new Map();
+            (scores || []).forEach(s => scoreByKey.set(s.key, s));
+            (doc.categories || []).forEach(cat => {
+                const levels = [];
+                (cat.criteria || []).forEach(cr => {
+                    const s = scoreByKey.get(cr.key);
+                    const lvl = s && typeof s.level === 'number' ? s.level : 0;
+                    if (lvl > 0) levels.push(lvl);
+                });
+                if (!levels.length) return;
+                const avg = levels.reduce((a, b) => a + b, 0) / levels.length;
+                byCat.set(cat.title, Math.round(avg * 10) / 10);
+            });
+            const cats = Array.from(byCat.keys()).sort();
+            if (!cats.length) return null;
+            const categoryScores = cats.map(c => ({ category: c, level: byCat.get(c) }));
+            const overall = Math.round((categoryScores.reduce((a, b) => a + b.level, 0) / categoryScores.length) * 10) / 10;
+            return { overallLevel: overall, categoryScores };
+        }
+
+        function persistMaturityAnswers() {
+            try {
+                localStorage.setItem(`kubeapp.maturity.answers.${state.cluster}`, JSON.stringify(maturityAnswers || {}));
+            } catch (_) { }
+        }
+
+        function restoreMaturityAnswers() {
+            try {
+                const raw = localStorage.getItem(`kubeapp.maturity.answers.${state.cluster}`);
+                maturityAnswers = raw ? JSON.parse(raw) : {};
+            } catch (_) {
+                maturityAnswers = {};
+            }
+        }
+
+
+        function attachMaturityDetailHandlers() {
+            document.querySelectorAll('.maturity-link[data-toggle]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-toggle');
+                    const el = id ? document.getElementById(id) : null;
+                    if (!el) return;
+                    el.classList.toggle('hidden');
+                });
+            });
+
+            document.querySelectorAll('[data-save-answer]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const key = btn.getAttribute('data-save-answer');
+                    if (!key) return;
+                    const ta = document.querySelector(`.maturity-answer[data-answer-key="${CSS.escape(key)}"]`);
+                    const v = ta ? String(ta.value || '').trim() : '';
+                    if (!maturityAnswers) maturityAnswers = {};
+                    if (!v) delete maturityAnswers[key];
+                    else maturityAnswers[key] = v;
+                    persistMaturityAnswers();
+                    renderMaturityUI(maturityCriteriaDoc, maturityLastReport);
+                });
+            });
+
+            document.querySelectorAll('[data-clear-answer]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const key = btn.getAttribute('data-clear-answer');
+                    if (!key) return;
+                    if (maturityAnswers && key in maturityAnswers) delete maturityAnswers[key];
+                    persistMaturityAnswers();
+                    renderMaturityUI(maturityCriteriaDoc, maturityLastReport);
+                });
+            });
+        }
+
+        function buildLLMConfig() {
+            const provider = (els.llmProvider?.value || 'auto').trim();
+            const model = (els.llmModel?.value || '').trim();
+            const apiKey = (els.llmApiKey?.value || '').trim();
+            return { provider, model, apiKey };
+        }
+
+        async function downloadMaturityPDF() {
+            if (!els.maturityStatus) return;
+            els.maturityStatus.textContent = 'PDF hazırlanıyor...';
+            els.maturityStatus.classList.remove('error', 'success');
+            try {
+                persistLLMSettings();
+                const body = {
+                    userNotes: (els.maturityNotes?.value || '').trim(),
+                    answers: maturityAnswers || {},
+                    llm: buildLLMConfig()
+                };
+                const res = await fetch(`/api/maturity/report/pdf?cluster=${encodeURIComponent(state.cluster)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || `HTTP ${res.status}`);
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `maturity-report-${state.cluster}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                els.maturityStatus.textContent = 'PDF indirildi.';
+                els.maturityStatus.classList.add('success');
+            } catch (e) {
+                els.maturityStatus.textContent = `PDF failed: ${e.message}`;
+                els.maturityStatus.classList.add('error');
+            }
+        }
+
+        if (els.downloadPdfBtn) els.downloadPdfBtn.addEventListener('click', downloadMaturityPDF);
+
+        function clearMaturityData() {
+            const ok = confirm('Notlar ve tüm manuel cevaplar temizlensin mi?');
+            if (!ok) return;
+            try {
+                maturityAnswers = {};
+                persistMaturityAnswers();
+            } catch (_) { }
+            try {
+                if (els.maturityNotes) els.maturityNotes.value = '';
+            } catch (_) { }
+            try {
+                maturityWizardQuestions = [];
+                maturityWizardIndex = 0;
+                maturityWizardSelections = {};
+                closeMaturityWizard();
+            } catch (_) { }
+            try {
+                maturityLastReport = null;
+                if (els.maturityStatus) {
+                    els.maturityStatus.textContent = 'Temizlendi.';
+                    els.maturityStatus.classList.remove('error');
+                    els.maturityStatus.classList.add('success');
+                }
+            } catch (_) { }
+            renderMaturityUI(maturityCriteriaDoc, maturityLastReport);
+        }
+
+        if (els.clearMaturityBtn) els.clearMaturityBtn.addEventListener('click', clearMaturityData);
+
+        function openMaturityWizard() {
+            if (!els.maturityWizard || !els.maturityWizardContent) return;
+            els.maturityWizard.classList.remove('hidden');
+            maturityWizardQuestions = [];
+            maturityWizardIndex = 0;
+            maturityWizardSelections = {};
+            if (els.maturityWizardLLM) els.maturityWizardLLM.textContent = '';
+            if (els.maturityWizardSubtitle) els.maturityWizardSubtitle.textContent = 'Precheck tamamlandı. Eksik/şüpheli kriterler için hızlı sorular.';
+            renderMaturityWizard();
+        }
+
+        function closeMaturityWizard() {
+            if (!els.maturityWizard) return;
+            els.maturityWizard.classList.add('hidden');
+        }
+
+        async function generateMaturityWizardQuestions() {
+            if (!els.maturityWizardContent) return;
+            els.maturityWizardContent.innerHTML = `<div class="maturity-muted">Sorular hazırlanıyor...</div>`;
+            try {
+                persistLLMSettings();
+                const body = {
+                    maxQuestions: 20,
+                    minConfidence: 0.6,
+                    userNotes: (els.maturityNotes?.value || '').trim(),
+                    answers: maturityAnswers || {},
+                    llm: buildLLMConfig()
+                };
+                const resp = await requestJSON(`/api/maturity/questions?cluster=${encodeURIComponent(state.cluster)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                maturityWizardQuestions = Array.isArray(resp.questions) ? resp.questions : [];
+                maturityWizardIndex = 0;
+                if (els.maturityWizardLLM) {
+                    els.maturityWizardLLM.textContent = resp.llm
+                        ? `LLM: ${resp.llm.provider}${resp.llm.model ? ' / ' + resp.llm.model : ''}`
+                        : (resp.note ? String(resp.note) : '');
+                }
+                renderMaturityWizard();
+            } catch (e) {
+                els.maturityWizardContent.innerHTML = `<div class="maturity-muted">Sorular oluşturulamadı: ${escapeHTML(e.message)}<br/>Devam edip manuel cevap girebilirsiniz.</div>`;
+            }
+        }
+
+        function renderMaturityWizard() {
+            if (!els.maturityWizardContent) return;
+            const total = maturityWizardQuestions.length;
+            if (els.maturityWizardPrev) els.maturityWizardPrev.disabled = maturityWizardIndex <= 0;
+            if (els.maturityWizardNext) els.maturityWizardNext.classList.toggle('hidden', total === 0 || maturityWizardIndex >= total - 1);
+            if (els.maturityWizardRun) els.maturityWizardRun.classList.toggle('hidden', total === 0 || maturityWizardIndex < total - 1);
+            if (els.maturityWizardProgress) {
+                els.maturityWizardProgress.textContent = total ? `${maturityWizardIndex + 1}/${total}` : '0/0';
+            }
+
+            if (!total) {
+                if (els.maturityWizardNext) els.maturityWizardNext.disabled = true;
+                if (els.maturityWizardRun) els.maturityWizardRun.disabled = true;
+                els.maturityWizardContent.innerHTML = `
+                    <div class="maturity-muted">Henüz soru yok. “Soruları Oluştur” ile devam edin veya “Atla” ile rapor oluşturun.</div>
+                `;
+                return;
+            }
+
+            const q = maturityWizardQuestions[maturityWizardIndex];
+            const selected = maturityWizardSelections[q.key] || {};
+            const choice = selected.choice || '';
+            const note = selected.note || '';
+            const choices = Array.isArray(q.choices) && q.choices.length ? q.choices : ['L1','L2','L3','L4','L5','Bilmiyorum'];
+            const hints = Array.isArray(q.hints) ? q.hints : [];
+
+            if (els.maturityWizardNext) els.maturityWizardNext.disabled = !choice;
+            if (els.maturityWizardRun) els.maturityWizardRun.disabled = !choice;
+
+            els.maturityWizardContent.innerHTML = `
+                <div class="maturity-wizard-question-title">${escapeHTML(q.category || '')}</div>
+                <div class="maturity-wizard-question-title">${escapeHTML(q.criterion || '')}</div>
+                <div class="maturity-wizard-question-text">${escapeHTML(q.question || '')}</div>
+                ${hints.length ? `
+                    <ul class="maturity-details-list">
+                        ${hints.slice(0, 6).map(h => `<li>${escapeHTML(h)}</li>`).join('')}
+                    </ul>
+                ` : ``}
+                <div class="maturity-wizard-choices">
+                    ${choices.map(c => `<button type="button" class="maturity-choice ${c === choice ? 'selected' : ''}" data-choice="${escapeHTML(c)}">${escapeHTML(c)}</button>`).join('')}
+                </div>
+                <textarea class="maturity-wizard-note" id="maturityWizardNote" placeholder="Opsiyonel: kısa kanıt / link / komut çıktısı...">${escapeHTML(note)}</textarea>
+            `;
+
+            els.maturityWizardContent.querySelectorAll('[data-choice]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const c = btn.getAttribute('data-choice') || '';
+                    maturityWizardSelections[q.key] = { ...(maturityWizardSelections[q.key] || {}), choice: c };
+                    renderMaturityWizard();
+                });
+            });
+        }
+
+        function persistWizardAnswer() {
+            const total = maturityWizardQuestions.length;
+            if (!total) return;
+            const q = maturityWizardQuestions[maturityWizardIndex];
+            const selected = maturityWizardSelections[q.key] || {};
+            const noteEl = document.getElementById('maturityWizardNote');
+            const note = noteEl ? String(noteEl.value || '').trim() : (selected.note || '');
+            maturityWizardSelections[q.key] = { ...selected, note };
+
+            const choice = String((maturityWizardSelections[q.key] || {}).choice || '').trim();
+            if (!choice) return;
+            const merged = note ? `${choice} — ${note}` : choice;
+            if (!maturityAnswers) maturityAnswers = {};
+            maturityAnswers[q.key] = merged;
+            persistMaturityAnswers();
+        }
+
+        async function runFinalAnalysisFromWizard() {
+            persistWizardAnswer();
+            closeMaturityWizard();
+            if (!els.maturityStatus) return;
+            els.maturityStatus.textContent = 'Collecting evidence + analyzing...';
+            els.maturityStatus.classList.remove('error', 'success');
+            try {
+                persistLLMSettings();
+                const body = {
+                    userNotes: (els.maturityNotes?.value || '').trim(),
+                    answers: maturityAnswers || {},
+                    llm: buildLLMConfig()
+                };
+                const report = await requestJSON(`/api/maturity/analyze?cluster=${encodeURIComponent(state.cluster)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                maturityLastReport = report;
+                els.maturityStatus.textContent = report.llm
+                    ? `Done (LLM: ${report.llm.provider}${report.llm.model ? ' / ' + report.llm.model : ''}).`
+                    : 'Done.';
+                els.maturityStatus.classList.add('success');
+                renderMaturityUI(maturityCriteriaDoc, maturityLastReport);
+            } catch (e) {
+                els.maturityStatus.textContent = `Analysis failed: ${e.message}`;
+                els.maturityStatus.classList.add('error');
+            }
+        }
+
+        if (els.maturityWizardClose) els.maturityWizardClose.addEventListener('click', closeMaturityWizard);
+        if (els.maturityWizardGenerate) els.maturityWizardGenerate.addEventListener('click', generateMaturityWizardQuestions);
+        if (els.maturityWizardSkip) els.maturityWizardSkip.addEventListener('click', runFinalAnalysisFromWizard);
+        if (els.maturityWizardPrev) els.maturityWizardPrev.addEventListener('click', () => {
+            persistWizardAnswer();
+            maturityWizardIndex = Math.max(0, maturityWizardIndex - 1);
+            renderMaturityWizard();
+        });
+        if (els.maturityWizardNext) els.maturityWizardNext.addEventListener('click', () => {
+            persistWizardAnswer();
+            maturityWizardIndex = Math.min(maturityWizardQuestions.length - 1, maturityWizardIndex + 1);
+            renderMaturityWizard();
+        });
+        if (els.maturityWizardRun) els.maturityWizardRun.addEventListener('click', runFinalAnalysisFromWizard);
+
+        function persistLLMSettings() {
+            try {
+                const provider = (els.llmProvider?.value || 'auto').trim();
+                const model = (els.llmModel?.value || '').trim();
+                localStorage.setItem('kubeapp.llm.provider', provider);
+                localStorage.setItem('kubeapp.llm.model', model);
+            } catch (_) { }
+        }
+
+        function restoreLLMSettings() {
+            try {
+                const provider = localStorage.getItem('kubeapp.llm.provider') || 'auto';
+                const model = localStorage.getItem('kubeapp.llm.model') || '';
+                if (els.llmProvider) els.llmProvider.value = provider;
+                if (els.llmModel) els.llmModel.value = model;
+            } catch (_) { }
+        }
 
         // Upload kubeconfig
         els.uploadBtn.addEventListener('click', async () => {
@@ -1419,6 +1917,7 @@
                 const context = (els.kubeconfigContext.value || '').trim();
                 if (name) fd.append('name', name);
                 if (context) fd.append('context', context);
+                if (els.kubeconfigInsecure && els.kubeconfigInsecure.checked) fd.append('insecure', 'true');
 
                 const res = await fetch('/api/cluster/upload', { method: 'POST', body: fd });
                 const text = await res.text();
