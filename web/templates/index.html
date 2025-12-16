@@ -16,6 +16,12 @@
 </head>
 
 <body>
+    <div id="globalLoading" class="global-loading hidden" role="status" aria-live="polite" aria-label="Loading">
+        <div class="global-loading-card">
+            <div class="global-spinner" aria-hidden="true"></div>
+            <div id="globalLoadingText" class="global-loading-text">Loading...</div>
+        </div>
+    </div>
     <div class="dashboard-container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -167,12 +173,14 @@
                                             <option value="auto">Auto</option>
                                             <option value="gemini">Gemini</option>
                                             <option value="openai">OpenAI</option>
+                                            <option value="openrouter">OpenRouter</option>
                                             <option value="none">None</option>
                                         </select>
                                     </div>
                                     <div class="maturity-field">
                                         <label class="maturity-label" for="llmModel">Model</label>
-                                        <input id="llmModel" class="maturity-input" type="text" placeholder="gemini-1.5-flash / gpt-4o-mini">
+                                        <input id="llmModel" class="maturity-input" type="text" list="llmModelOptions" placeholder="Seç veya yaz (örn: gpt-4o-mini)">
+                                        <datalist id="llmModelOptions"></datalist>
                                     </div>
                                     <div class="maturity-field">
                                         <label class="maturity-label" for="llmApiKey">API Key</label>
@@ -234,6 +242,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <div class="content-body hidden" id="listView">
@@ -558,7 +567,9 @@
             maturityWizardContent: document.getElementById('maturityWizardContent'),
             maturityWizardProgress: document.getElementById('maturityWizardProgress'),
             maturityWizardLLM: document.getElementById('maturityWizardLLM'),
-            maturityWizardSubtitle: document.getElementById('maturityWizardSubtitle')
+            maturityWizardSubtitle: document.getElementById('maturityWizardSubtitle'),
+            globalLoading: document.getElementById('globalLoading'),
+            globalLoadingText: document.getElementById('globalLoadingText')
         };
 
         // Initial Cytoscape instance
@@ -568,6 +579,25 @@
             const str = String(value || '');
             if (str.length <= maxLen) return str;
             return str.slice(0, maxLen) + '…';
+        }
+
+        let globalLoadingCount = 0;
+        function showGlobalLoading(message) {
+            globalLoadingCount++;
+            if (!els.globalLoading) return;
+            if (els.globalLoadingText) {
+                els.globalLoadingText.textContent = String(message || 'Loading...');
+            }
+            els.globalLoading.classList.remove('hidden');
+        }
+        function setGlobalLoadingText(message) {
+            if (!els.globalLoadingText) return;
+            els.globalLoadingText.textContent = String(message || 'Loading...');
+        }
+        function hideGlobalLoading() {
+            globalLoadingCount = Math.max(0, globalLoadingCount - 1);
+            if (!els.globalLoading) return;
+            if (globalLoadingCount === 0) els.globalLoading.classList.add('hidden');
         }
 
         async function requestJSON(url, options = {}) {
@@ -610,6 +640,7 @@
             setActiveNav('maturity');
             updateBreadcrumbs();
             restoreLLMSettings();
+            updateLLMModelOptions();
             restoreMaturityAnswers();
             await loadMaturityCriteria();
             loadMaturityEvidence();
@@ -1090,9 +1121,13 @@
         }
         refreshKubeconfigFileLabel();
 
-        els.clusterSelect.addEventListener('change', (e) => {
+        els.clusterSelect.addEventListener('change', async (e) => {
             state.cluster = e.target.value;
-            fetchNamespaces().then(() => {
+            updateBreadcrumbs();
+
+            showGlobalLoading('Cluster bilgileri yükleniyor...');
+            try {
+                await fetchNamespaces();
                 if (state.view === 'analysis') {
                     maturityLastReport = null;
                     maturityLastEvidence = null;
@@ -1101,11 +1136,14 @@
                         els.maturityEvidence.classList.add('empty');
                         els.maturityEvidence.textContent = 'Henüz yüklenmedi.';
                     }
-                    loadMaturityCriteria().then(loadMaturityEvidence);
+                    await loadMaturityCriteria();
+                    await loadMaturityEvidence();
+                } else {
+                    await Promise.resolve(refreshAll());
                 }
-                else refreshAll();
-            });
-            updateBreadcrumbs();
+            } finally {
+                hideGlobalLoading();
+            }
         });
 
         els.nsSelect.addEventListener('change', (e) => {
@@ -1126,6 +1164,12 @@
         let maturityLastReport = null;
         let maturityLastEvidence = null;
         let maturityAnswers = {};
+        let maturityExplainByKey = new Map();
+        let maturityExplainPending = new Set();
+        let maturityExplainQueue = [];
+        let maturityExplainWorkersStarted = false;
+        let maturityExplainTargetKeys = null; // Set<string> for current full analysis
+        let maturityExplainTargetTotal = 0;
         let maturityWizardQuestions = [];
         let maturityWizardIndex = 0;
         let maturityWizardSelections = {};
@@ -1164,6 +1208,8 @@
                 : null;
             const scoreSource = report || precheckSummary;
 
+            const explainNeeded = [];
+
             const html = categories.map(cat => {
                 const crit = cat.criteria || [];
                 const filtered = query
@@ -1177,11 +1223,13 @@
                 const rows = filtered.map(cr => {
                     const s = scoreByKey.get(cr.key);
                     const inf = inferredByKey.get(cr.key);
-                    const base = s && (s.level || 0) > 0 ? s : (inf && (inf.level || 0) > 0 ? inf : null);
+                    const isFinal = !!(s && (s.level || 0) > 0);
+                    const base = isFinal ? s : (inf && (inf.level || 0) > 0 ? inf : null);
                     const levelNum = base ? (base.level || 0) : 0;
                     const confidence = base && typeof base.confidence === 'number' ? base.confidence : 0;
                     const confPct = Math.round(confidence * 100);
-                    const rationale = base && base.rationale ? escapeHTML(base.rationale) : '';
+                    const explain = maturityExplainByKey.get(cr.key);
+                    const rationale = explain ? escapeHTML(explain) : (base && base.rationale ? escapeHTML(base.rationale) : '');
                     const evidence = base && base.evidence && base.evidence.length ? escapeHTML(base.evidence.slice(0, 3).join(' • ')) : '';
                     let missing = (s && Array.isArray(s.missing) && s.missing.length) ? s.missing : [];
                     if (!missing.length) {
@@ -1190,11 +1238,24 @@
                     const answer = (maturityAnswers && cr.key in maturityAnswers) ? (maturityAnswers[cr.key] || '') : '';
                     const hasAnswer = !!String(answer).trim();
                     const detailsId = `maturity-details-${cr.key}`;
+
+                    if (levelNum > 0 && !maturityExplainByKey.has(cr.key) && !maturityExplainPending.has(cr.key)) {
+                        explainNeeded.push({
+                            key: cr.key,
+                            category: String(cat.title || cat.id || ''),
+                            criterion: String(cr.name || ''),
+                            level: levelNum,
+                            confidence,
+                            rationale: base && base.rationale ? String(base.rationale) : '',
+                            evidence: base && base.evidence && base.evidence.length ? base.evidence.slice(0, 5) : []
+                        });
+                    }
+
                     return `
                         <div class="maturity-row">
                             <div class="maturity-row-main">
                                 <div class="maturity-row-title">${escapeHTML(cr.name)}</div>
-                                ${rationale ? `<div class="maturity-row-sub">${rationale}</div>` : `<div class="maturity-row-sub muted">Skor yok. Analyze çalıştırabilir veya bilgi ekleyebilirsiniz.</div>`}
+                                ${rationale ? `<div class="maturity-row-sub">${rationale}</div>` : (levelNum ? `<div class="maturity-row-sub muted">Özet hazırlanıyor...</div>` : `<div class="maturity-row-sub muted">Skor yok. Analyze çalıştırabilir veya bilgi ekleyebilirsiniz.</div>`)}
                                 ${evidence ? `<div class="maturity-row-evidence">${evidence}</div>` : ``}
                                 <div class="maturity-row-actions">
                                     <button class="maturity-link" type="button" data-toggle="${escapeHTML(detailsId)}">${hasAnswer ? 'Cevabı düzenle' : 'Bilgi ekle'}</button>
@@ -1219,10 +1280,10 @@
                                 </div>
                             </div>
                             <div class="maturity-row-metrics">
-                                <div class="maturity-chip level-${levelNum}">${levelNum ? `L${levelNum}` : '—'}</div>
-                                <div class="maturity-conf" title="Confidence">
+                                <div class="maturity-chip level-${levelNum}">${levelNum ? `${isFinal ? '' : 'Ön '}L${levelNum}` : '—'}</div>
+                                <div class="maturity-conf" title="${isFinal ? 'Confidence' : 'Ön tespit güveni'}">
                                     <div class="maturity-conf-bar"><span style="width:${confPct}%"></span></div>
-                                    <div class="maturity-conf-text">${levelNum ? `${confPct}%` : '—'}</div>
+                                    <div class="maturity-conf-text">${levelNum ? `${confPct}%${isFinal ? '' : ''}` : '—'}</div>
                                 </div>
                             </div>
                         </div>
@@ -1247,6 +1308,133 @@
 
             els.maturityResults.innerHTML = html || `<div class="maturity-empty">Eşleşen kriter bulunamadı.</div>`;
             attachMaturityDetailHandlers();
+
+            // If we don't have a full analysis target (e.g. precheck view), explain only visible criteria.
+            if (!maturityExplainTargetKeys && explainNeeded.length) {
+                scheduleMaturityExplain(explainNeeded.slice(0, 30));
+            }
+        }
+
+        function buildExplainEvidencePayload() {
+            const ev = maturityLastEvidence || {};
+            const kubectlEntries = ev.kubectl ? Object.entries(ev.kubectl) : [];
+            const kubectlSnippets = kubectlEntries.slice(0, 10).map(([cmd, out]) => ({
+                command: String(cmd || '').slice(0, 180),
+                output: truncateText(String(out || ''), 420)
+            }));
+            return {
+                cluster: state.cluster,
+                kubernetesVersion: ev.kubernetesVersion,
+                nodeCount: ev.nodeCount,
+                controlPlaneNodeCount: ev.controlPlaneNodeCount,
+                zoneCount: ev.zoneCount,
+                zones: ev.zones,
+                namespaceCount: ev.namespaceCount,
+                detectedAddons: ev.detectedAddons,
+                permissions: ev.permissions,
+                kubectl: kubectlSnippets
+            };
+        }
+
+        function startExplainWorkers() {
+            if (maturityExplainWorkersStarted) return;
+            maturityExplainWorkersStarted = true;
+            const concurrency = 3;
+            for (let i = 0; i < concurrency; i++) {
+                (async function worker() {
+                    while (true) {
+                        const batch = maturityExplainQueue.shift();
+                        if (!batch) {
+                            await new Promise(r => setTimeout(r, 120));
+                            continue;
+                        }
+                        try {
+                            const body = {
+                                items: batch,
+                                userNotes: (els.maturityNotes?.value || '').trim(),
+                                evidence: buildExplainEvidencePayload(),
+                                llm: buildLLMConfig()
+                            };
+                            const resp = await requestJSON('/api/maturity/explain', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(body)
+                            });
+                            const results = resp && resp.results ? resp.results : [];
+                            results.forEach(r => {
+                                if (r && r.key) maturityExplainByKey.set(r.key, String(r.summary || '').trim());
+                            });
+                        } catch (e) {
+                            // Leave fallback rationale; avoid hard-failing UI.
+                        } finally {
+                            batch.forEach(it => maturityExplainPending.delete(it.key));
+                            // Re-render only if we're still on analysis view.
+                            if (state.view === 'analysis') renderMaturityUI(maturityCriteriaDoc, maturityLastReport);
+                        }
+                    }
+                })();
+            }
+        }
+
+        function scheduleMaturityExplain(items) {
+            startExplainWorkers();
+            const pending = [];
+            items.forEach(it => {
+                if (!it || !it.key) return;
+                if (maturityExplainByKey.has(it.key)) return;
+                if (maturityExplainPending.has(it.key)) return;
+                maturityExplainPending.add(it.key);
+                pending.push(it);
+            });
+            if (!pending.length) return;
+            const batchSize = 5;
+            for (let i = 0; i < pending.length; i += batchSize) {
+                maturityExplainQueue.push(pending.slice(i, i + batchSize));
+            }
+        }
+
+        function resetMaturityExplainState() {
+            maturityExplainByKey = new Map();
+            maturityExplainPending = new Set();
+            maturityExplainQueue = [];
+            maturityExplainTargetKeys = null;
+            maturityExplainTargetTotal = 0;
+        }
+
+        function scheduleMaturityExplainForReport(report) {
+            resetMaturityExplainState();
+            if (!report || !Array.isArray(report.criteriaScores)) return;
+            const items = report.criteriaScores
+                .filter(s => s && typeof s.key === 'string' && (s.level || 0) > 0)
+                .map(s => ({
+                    key: s.key,
+                    category: s.category,
+                    criterion: s.criterion,
+                    level: s.level || 0,
+                    confidence: typeof s.confidence === 'number' ? s.confidence : 0,
+                    rationale: s.rationale || '',
+                    evidence: Array.isArray(s.evidence) ? s.evidence.slice(0, 5) : []
+                }));
+
+            maturityExplainTargetKeys = new Set(items.map(i => i.key));
+            maturityExplainTargetTotal = maturityExplainTargetKeys.size;
+
+            // Throttle total LLM work. Still parallel/batched, but not unbounded.
+            scheduleMaturityExplain(items.slice(0, 120));
+        }
+
+        async function waitForMaturityExplainDone(maxMs = 180000) {
+            const start = Date.now();
+            while (true) {
+                const pending = maturityExplainPending.size;
+                const queued = maturityExplainQueue.length;
+                const total = maturityExplainTargetTotal || 0;
+                const done = total ? Math.max(0, total - pending) : 0;
+                if (total > 0) setGlobalLoadingText(`Özetler hazırlanıyor... (${Math.min(done, total)}/${total})`);
+                if (pending === 0 && queued === 0) return;
+                if (Date.now() - start > maxMs) return;
+                await new Promise(r => setTimeout(r, 250));
+            }
         }
 
         function escapeHTML(str) {
@@ -1260,8 +1448,8 @@
 
         function defaultQuestionsForCriterion(cr) {
             const out = [
-                'Bu kriter için mevcut durum hangi seviye? (L1–L5 seçin veya kısaca açıklayın)',
-                'Kanıt var mı? (ör. YAML/komut çıktısı/runbook/ADR linki)'
+                'İstenen: L1–L5 seçimi yapın ve 1-2 cümleyle nedenini yazın.',
+                'Kanıt: en az 1 adet ekleyin (YAML snippet/link, kubectl çıktısı, runbook/ADR linki).'
             ];
             const levels = Array.isArray(cr.levels) ? cr.levels : [];
             if (levels.length === 5) {
@@ -1270,145 +1458,16 @@
                     if (!text) return null;
                     return `L${i + 1}=${truncateText(text, 70)}`;
                 }).filter(Boolean);
-                if (parts.length) out.push('Seviye seçenekleri (özet): ' + parts.join(' | '));
+                if (parts.length) out.push('Seviye tanımları (özet): ' + parts.join(' | '));
             }
             const name = String(cr.name || '').toLowerCase();
             const label = String(cr.name || '').trim() || 'Bu kriter';
             if (label) {
-                out.push(`${label} kriteri için hangi komutlar/raporlar/kanıtlar mevcut?`);
+                out.push(`İstenen: ${label} için hangi kanıt(lar)ı ekleyebilirsiniz? (komut çıktısı / YAML / link)`);
             }
             const cmdSuggestions = suggestCommandsForCriterion(name);
             if (cmdSuggestions.length) {
-                out.push(`Bu kriteri doğrulamak için şu komutlardan birinin çıktısını ekleyin: ${cmdSuggestions.map(c => `\`${c}\``).join(' / ')}`);
-            }
-            // Security odaklı ek sorular
-            if (name === 'service account policy') {
-                out.push('Uygulamalar default ServiceAccount mı kullanıyor, yoksa her uygulama için ayrı SA var mı?');
-                out.push('Default SA için `automountServiceAccountToken` kapalı mı? Hangi namespace’lerde?');
-            } else if (name === 'user access model') {
-                out.push('Cluster-admin rolü kimlerde var? (takım/kişi listesi)');
-                out.push('Prod/stage/dev için ayrı RBAC mi var, yoksa ortak mı?');
-            } else if (name === 'privileged access') {
-                out.push('Kök/privileged erişimler nasıl veriliyor? Sadece break-glass mı, yoksa günlük işlerde de mi kullanılıyor?');
-                out.push('sudo/privileged pod çalıştırmak için onay süreci var mı?');
-            } else if (name === 'approval process') {
-                out.push('Prod’a deploy/konfig değişikliği için kim onay veriyor? Süreç tool bazlı mı (ör. Git PR) yoksa manuel mi?');
-            } else if (name === 'audit & review') {
-                out.push('RBAC/policy review’leri hangi sıklıkta yapılıyor (yapılıyorsa)?');
-                out.push('Audit logları nerede tutuluyor, kimler erişebiliyor?');
-            } else if (name === 'initial audit') {
-                out.push('Son CIS/kube-bench/skaner çıktısı var mı? Özetini buraya koyabilir veya link verebilirsiniz.');
-            } else if (name === 'api server config') {
-                out.push('API server için audit-policy, anonymous access, insecure port gibi ayarlarınızın özetini yazın.');
-                out.push('Apiserver config’i Git ile mi yönetiliyor yoksa manuel mü?');
-            } else if (name === 'etcd encryption') {
-                out.push('etcd için at-rest encryption aktif mi? (apiserver flag veya dokümantasyon linki).');
-            } else if (name === 'kubelet hardening') {
-                out.push('Kubelet için read-only port kapalı mı, kubelet authz/authn ayarları nasıl?');
-            } else if (name === 'pod security') {
-                out.push('Prod namespace’lerde hangi Pod Security level enforce ediliyor (baseline/restricted)?');
-                out.push('PSA/PSP/OPA/ Kyverno ile zorunlu kıldığınız önemli kurallar neler?');
-            } else if (name === 'remediation') {
-                out.push('Policy ihlali veya vulnerability bulununca otomatik düzeltme var mı, yoksa manuel mi? Örnek süreç yazın.');
-            } else if (name === 'image scanning') {
-                out.push('İmajlar hangi aşamada taranıyor (CI, registry, runtime)? Hangi tool kullanılıyor (Trivy, Grype, Aqua vb.)?');
-            } else if (name === 'secrets mgmt') {
-                out.push('Kritik secret’lar Kubernetes Secret mı, yoksa external (Vault, SOPS, SealedSecrets, KMS) mı?');
-            } else if (name === 'image pull policy') {
-                out.push('Prod ortamda `imagePullPolicy` için genel yaklaşımınız nedir (Always/IfNotPresent)? Tag stratejinizi özetleyin.');
-            }
-            if (name === 'rto/rpo tanimi' || name === 'rto/rpo tanımı') {
-                out.push('RTO ve RPO hedefleri nerede dokümante ediliyor? Hangi ortamlar için kaç dakika/saat hedefi var?');
-                out.push('Backup aracı (Velero veya benzeri) bu hedefleri nasıl karşılıyor? Schedule çıktısı veya policy linki ekleyin.');
-            } else if (name === 'data retention') {
-                out.push('Log/data retention policy\'niz nedir? Saklama süresi, tier ve storage sınıfları nelerdir?');
-                out.push('Retention ayarları Git ile mi yönetiliyor, yoksa manuel mi? Hangi storage sınıflarından faydalanıyorsunuz?');
-            } else if (name === 'log retention') {
-                out.push('Log retention politikası ne kadar sürüyor? (örneğin 30 gün, 90 gün vs.)');
-                out.push('Retention kontrolü nerede tutuluyor (Loki, Elasticsearch, Cloud)? Örnek komut veya dashboard linki paylaşın.');
-            } else if (name === 'audit log') {
-                out.push('Audit loglar nereye gönderiliyor? (Loki, Elasticsearch, Cloud Audit Logging vb.)');
-                out.push('Kimler audit loglara erişebiliyor ve retention/silme politikası nedir?');
-            }
-            if (name === 'backup location') {
-                out.push('Velero BackupStorageLocation (veya başka storage tanımı) nerede? Hangi hedef (s3, gcs, azure) kullanılıyor?');
-                out.push('Location için bucket/container, region, encryption bilgisi var mı?');
-            } else if (name === 'backup frequency') {
-                out.push('Backup schedule’lar nasıl organizedir? (günlük, saatlik, namespace bazlı vs.)');
-            } else if (name === 'backup encryption') {
-                out.push('Storage location için encryption/KMS ayarlarını paylaşın (kmsKeyId, encryption key).');
-                out.push('Backup içeriği at-rest şifreli mi? Hangi araçla?');
-            } else if (name === 'backup scope') {
-                out.push('Hangi namespace/cluster component’lar backup alınıyor? Velero schedule/backup legend’i var mı?');
-            } else if (name === 'restore testing') {
-                out.push('Restore testi yaptınız mı? Hangi backup/namespace ile, hangi zaman diliminde?');
-            } else if (name === 'restore proc') {
-                out.push('Restore prosedürü adım adım nedir? (Velero restore, manuel restore vs.)');
-            }
-            if (name === 'utilization analysis') {
-                out.push('Utilization analizi için hangi metric stack mevcut (Prometheus, kube-state-metrics vb.)?');
-                out.push('Hangi ekipler veya dashboard’lar bu metrikleri izliyor?');
-            } else if (name === 'over-provisioning') {
-                out.push('ResourceQuota/LimitRange politikaları var mı? Hangi namespace’ler için uygulanıyor?');
-                out.push('Kaynakları kısıtlamak için hangi süreçler kullanılıyor? (ör. GitOps, policy)');
-            } else if (name === 'auto rightsizing') {
-                out.push('HPA/Cluster autoscaler mutlaka var mı? Hangi deployment/HPA bu sürece dahil?');
-                out.push('Rightsizing kararları nerede dokümante ediliyor veya otomasyonla uygulanıyor?');
-            } else if (name === 'cost reporting') {
-                out.push('Maliyet raporlamasını hangi araçlar hazırlıyor? (Grafana dashboard, Cloud billing, vb.)');
-                out.push('Per-application/per-cluster raporlar nerede saklanıyor?');
-            } else if (name === 'instance strategy') {
-                out.push('Node pool stratejiniz ne? (pool isimleri, çalışma saatleri, özel etiketler)');
-                out.push('Özel donanım/spot/preemptible node kullanımı nasıl planlanıyor?');
-            } else if (name === 'spot usage') {
-                out.push('Spot/preemptible node’lar cluster’da var mı? Hangi label/taint ile tanımlanıyorlar?');
-                out.push('Spot node kullanımını hangi servisler tüketiyor?');
-            } else if (name === 'node pool strategy') {
-                out.push('Node pool isimleri ve amaçlarını açıklayın (prod, staging, GPU, vb.).');
-                out.push('Node pool şeması/etiketleri nerede saklanıyor?');
-            } else if (name === 'cost savings') {
-                out.push('Maliyet optimizasyonu için hangi inisiyatifler var? (e.g. spot, rightsizing, autoscaling)');
-            } else if (name === 'cost allocation') {
-                out.push('Maliyetleri namespace/label bazında nasıl ayırıyorsunuz?');
-            } else if (name === 'budget control') {
-                out.push('Bütçe uyarıları nerede tanımlı? (Grafana alert, Cloud budgets, pagerduty vb.)');
-            } else if (name === 'finops culture') {
-                out.push('FinOps ekip/başlıkları nasıl organize? (per-app, center of excellence)?');
-            } else if (name === 'savings tracking') {
-                out.push('Tasarruf hedeflerini kim takip ediyor? (dashboard, runbook, vs.)');
-            }
-            if (name === 'deployment') {
-                out.push('Deployment süreciniz otomatik mi? Hangi tool(lar) ile tetikleniyor?');
-            } else if (name === 'git structure') {
-                out.push('Deployment repo yapınız nasıl organize (monorepo, team dirs, vs.)?');
-            } else if (name === 'rollback') {
-                out.push('Rollback prosedürü ne? Hangi araçlar veya playbooklar kullanılıyor?');
-            } else if (name === 'audit trail') {
-                out.push('Audit verisi nerede saklanıyor? (events, Cloud Audit Logging, vs.)');
-                out.push('Kimler audit trail raporlarını tüketiyor?');
-            } else if (name === 'helm usage') {
-                out.push('Helm release/values yönetimi nasıl yapılır? (helmfile, helm3, custom scripts)');
-            } else if (name === 'values mgmt') {
-                out.push('Values/secret yönetimi nasıl? (SealedSecrets, external secrets, etc.)');
-            } else if (name === 'chart testing') {
-                out.push('Chart’larınız CI/CD’de nasıl test ediliyor (helm lint, chart-testing, vs.)?');
-            } else if (name === 'release mgmt') {
-                out.push('Release planlama/approval süreçleri nasıl işliyor? (ArgoCD/Fleet, approvals)');
-            } else if (name === 'kubectl commands') {
-                out.push('Hangi kubectl komutlarını otomatik veya manuel çalıştırıyorsunuz?');
-                out.push('Pod/cluster düzeyinde sık kullanılan komutlar nelerdir?');
-            } else if (name === 'pod debugging') {
-                out.push('Pod debugging süreci nasıl? (kubectl exec, port-forward, ephemeral debug pod)');
-            } else if (name === 'event analysis') {
-                out.push('Event monitörünüz veya aggregate aracı var mı? (kubectl get events, ELK, Loki)');
-            } else if (name === 'alert system') {
-                out.push('Alert rule’lar nerede tanımlı? Hangi platformu kullanıyorsunuz (PrometheusRule, Cloud Alert)?');
-            } else if (name === 'alert fatigue') {
-                out.push('Alert sayısı nasıl yönetiliyor? (silencing, rate limiting, dedup)');
-            } else if (name === 'on-call runbook') {
-                out.push('On-call runbook dokümantasyonunuz nerede? (wiki, runbook repo, playbook)');
-            } else if (name === 'mttr') {
-                out.push('MTTR hedefi nedir? Hangi araçlarla ölçüyorsunuz?');
+                out.push(`Kanıt: şu komutlardan birinin çıktısını ekleyin: ${cmdSuggestions.map(c => `\`${c}\``).join(' / ')}`);
             }
             return out;
         }
@@ -1535,7 +1594,7 @@
                     return;
                 }
                 const summary = computeSummaryFromScores(maturityCriteriaDoc, inferred);
-                els.maturityOverallBadge.textContent = summary ? `L${summary.overallLevel.toFixed(1)}` : '—';
+                els.maturityOverallBadge.textContent = summary ? `Ön L${summary.overallLevel.toFixed(1)}` : '—';
                 els.maturityOverallBadge.className = `maturity-badge ${summary ? `level-${Math.round(summary.overallLevel)}` : 'level-0'}`;
                 const cats = summary ? summary.categoryScores : [];
                 const catRows = cats.slice(0, 10).map(c => {
@@ -1549,7 +1608,7 @@
                         </div>
                     `;
                 }).join('');
-                els.maturitySummary.innerHTML = catRows || `<div class="maturity-muted">Precheck skoru yok.</div>`;
+                els.maturitySummary.innerHTML = (catRows ? `<div class="maturity-muted">Ön tespit: gerçek rapor için Analyze çalıştırın.</div>` + catRows : `<div class="maturity-muted">Precheck skoru yok.</div>`);
                 return;
             }
             const overall = typeof report.overallLevel === 'number' ? report.overallLevel : null;
@@ -1651,17 +1710,21 @@
             return { provider, model, apiKey };
         }
 
+        function buildMaturityReportRequestBody() {
+            persistLLMSettings();
+            return {
+                userNotes: (els.maturityNotes?.value || '').trim(),
+                answers: maturityAnswers || {},
+                llm: buildLLMConfig()
+            };
+        }
+
         async function downloadMaturityPDF() {
             if (!els.maturityStatus) return;
             els.maturityStatus.textContent = 'PDF hazırlanıyor...';
             els.maturityStatus.classList.remove('error', 'success');
             try {
-                persistLLMSettings();
-                const body = {
-                    userNotes: (els.maturityNotes?.value || '').trim(),
-                    answers: maturityAnswers || {},
-                    llm: buildLLMConfig()
-                };
+                const body = buildMaturityReportRequestBody();
                 const res = await fetch(`/api/maturity/report/pdf?cluster=${encodeURIComponent(state.cluster)}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1689,6 +1752,7 @@
         }
 
         if (els.downloadPdfBtn) els.downloadPdfBtn.addEventListener('click', downloadMaturityPDF);
+
 
         function clearMaturityData() {
             const ok = confirm('Notlar ve tüm manuel cevaplar temizlensin mi?');
@@ -1841,6 +1905,7 @@
             if (!els.maturityStatus) return;
             els.maturityStatus.textContent = 'Collecting evidence + analyzing...';
             els.maturityStatus.classList.remove('error', 'success');
+            showGlobalLoading('Analiz yapılıyor (kanıt toplanıyor)...');
             try {
                 persistLLMSettings();
                 const body = {
@@ -1858,10 +1923,14 @@
                     ? `Done (LLM: ${report.llm.provider}${report.llm.model ? ' / ' + report.llm.model : ''}).`
                     : 'Done.';
                 els.maturityStatus.classList.add('success');
+                scheduleMaturityExplainForReport(maturityLastReport);
                 renderMaturityUI(maturityCriteriaDoc, maturityLastReport);
+                await waitForMaturityExplainDone();
             } catch (e) {
                 els.maturityStatus.textContent = `Analysis failed: ${e.message}`;
                 els.maturityStatus.classList.add('error');
+            } finally {
+                hideGlobalLoading();
             }
         }
 
@@ -1895,7 +1964,42 @@
                 const model = localStorage.getItem('kubeapp.llm.model') || '';
                 if (els.llmProvider) els.llmProvider.value = provider;
                 if (els.llmModel) els.llmModel.value = model;
+                updateLLMModelOptions();
             } catch (_) { }
+        }
+
+        function updateLLMModelOptions() {
+            const dl = document.getElementById('llmModelOptions');
+            if (!dl) return;
+            const provider = (els.llmProvider?.value || 'auto').trim().toLowerCase();
+
+            const uniq = (arr) => Array.from(new Set(arr.filter(Boolean).map(s => String(s).trim()).filter(Boolean)));
+            const add = (arr) => uniq(arr).map(m => `<option value="${escapeHTML(m)}"></option>`).join('');
+
+            const openaiModels = [
+                'gpt-4o-mini',
+                'gpt-4o',
+                'gpt-4.1-mini',
+                'gpt-4.1'
+            ];
+            const openrouterModels = [
+                'openai/gpt-4o-mini',
+                'openai/gpt-4o',
+                'anthropic/claude-3.5-sonnet',
+                'google/gemini-2.0-flash-001'
+            ];
+            const geminiModels = [
+                'gemini-2.5-flash',
+                'gemini-1.5-flash'
+            ];
+
+            let models = [];
+            if (provider === 'openai') models = openaiModels;
+            else if (provider === 'openrouter') models = openrouterModels;
+            else if (provider === 'gemini') models = geminiModels;
+            else models = uniq([...openaiModels, ...openrouterModels, ...geminiModels]);
+
+            dl.innerHTML = add(models);
         }
 
         // Upload kubeconfig
@@ -1928,12 +2032,17 @@
                 els.uploadStatus.classList.add('success');
 
                 // Refresh clusters and switch to the new one
-                await fetchClusters();
-                els.clusterSelect.value = data.name;
-                state.cluster = data.name;
-                await fetchNamespaces();
-                refreshAll();
-                updateBreadcrumbs();
+                showGlobalLoading('Yeni cluster yükleniyor...');
+                try {
+                    await fetchClusters();
+                    els.clusterSelect.value = data.name;
+                    state.cluster = data.name;
+                    updateBreadcrumbs();
+                    await fetchNamespaces();
+                    await Promise.resolve(refreshAll());
+                } finally {
+                    hideGlobalLoading();
+                }
 
                 // Clear file input and label so alignment reset
                 els.kubeconfigFile.value = '';

@@ -1,2 +1,1172 @@
 Connected to Kubernetes cluster 'default'
 Starting web server on http://localhost:8080
+2025/12/16 21:47:44 maturity evidence collected cluster=k10p in=15.672139536s
+2025/12/16 21:47:44 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): openrouter error (HTTP 401): {"error":{"message":"No cookie auth credentials found","code":401}}
+2025/12/16 21:47:44 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): openrouter error (HTTP 401): {"error":{"message":"No cookie auth credentials found","code":401}}
+2025/12/16 21:47:44 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): openrouter error (HTTP 401): {"error":{"message":"No cookie auth credentials found","code":401}}
+2025/12/16 21:47:44 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): openrouter error (HTTP 401): {"error":{"message":"No cookie auth credentials found","code":401}}
+2025/12/16 21:47:44 maturity questions done cluster=k10p in=190.662659ms llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 21:47:44 [req:1] POST /api/maturity/questions -> 200 (10821B) in 15.909s
+2025/12/16 21:48:04 maturity evidence collected cluster=k10p in=39.078µs
+2025/12/16 21:48:04 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): openrouter error (HTTP 401): {"error":{"message":"No cookie auth credentials found","code":401}}
+2025/12/16 21:48:04 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): openrouter error (HTTP 401): {"error":{"message":"No cookie auth credentials found","code":401}}
+2025/12/16 21:48:04 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): openrouter error (HTTP 401): {"error":{"message":"No cookie auth credentials found","code":401}}
+2025/12/16 21:48:04 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): openrouter error (HTTP 401): {"error":{"message":"No cookie auth credentials found","code":401}}
+2025/12/16 21:48:04 maturity questions done cluster=k10p in=46.419802ms llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 21:48:04 [req:2] POST /api/maturity/questions -> 200 (10822B) in 51ms
+[2025-12-16 21:56:04] --- restart ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/16 21:56:10 [req:1] GET / -> 200 (123365B) in 23ms
+[2025-12-16 22:07:53] --- restart ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/16 22:08:00 [req:1] GET / -> 200 (123365B) in 18ms
+2025/12/16 22:10:17 [req:2] GET / -> 200 (123365B) in 33ms
+2025/12/16 22:10:17 [req:3] GET /static/style.css -> 304 (0B) in 0s
+2025/12/16 22:10:19 [req:4] GET /api/clusters -> 200 (12B) in 0s
+2025/12/16 22:10:20 [req:5] GET /api/namespaces -> 200 (118B) in 56ms
+2025/12/16 22:10:20 [req:6] GET /api/maturity/criteria -> 200 (21659B) in 6ms
+2025/12/16 22:10:20 [req:7] GET /favicon.ico -> 200 (123365B) in 27ms
+2025/12/16 22:10:34 [req:8] GET /api/maturity/evidence -> 200 (22889B) in 13.632s
+2025/12/16 22:10:39 [req:9] POST /api/cluster/upload -> 200 (52B) in 4ms
+2025/12/16 22:10:39 [req:10] GET /api/clusters -> 200 (19B) in 0s
+2025/12/16 22:10:39 [req:11] GET /api/namespaces -> 200 (3657B) in 196ms
+2025/12/16 22:10:57 [req:12] GET /api/maturity/evidence -> 200 (39380B) in 17.945s
+2025/12/16 22:11:37 [req:13] GET /api/maturity/criteria -> 200 (21659B) in 5ms
+2025/12/16 22:11:37 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:37 [req:14] POST /api/maturity/explain -> 200 (748B) in 0s
+2025/12/16 22:11:37 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:37 [req:16] POST /api/maturity/explain -> 200 (779B) in 0s
+2025/12/16 22:11:37 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:37 [req:15] POST /api/maturity/explain -> 200 (663B) in 1ms
+2025/12/16 22:11:37 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:37 [req:17] POST /api/maturity/explain -> 200 (663B) in 0s
+2025/12/16 22:11:37 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:37 [req:18] POST /api/maturity/explain -> 200 (795B) in 0s
+2025/12/16 22:11:38 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:38 [req:19] POST /api/maturity/explain -> 200 (638B) in 18ms
+2025/12/16 22:11:38 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:38 [req:20] POST /api/maturity/explain -> 200 (706B) in 0s
+2025/12/16 22:11:38 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:38 [req:21] POST /api/maturity/explain -> 200 (681B) in 0s
+2025/12/16 22:11:38 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:38 [req:22] POST /api/maturity/explain -> 200 (674B) in 0s
+2025/12/16 22:11:38 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:38 [req:23] POST /api/maturity/explain -> 200 (681B) in 1ms
+2025/12/16 22:11:38 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:38 [req:24] POST /api/maturity/explain -> 200 (566B) in 0s
+2025/12/16 22:11:38 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:38 [req:25] POST /api/maturity/explain -> 200 (620B) in 0s
+2025/12/16 22:11:38 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:38 [req:26] POST /api/maturity/explain -> 200 (654B) in 0s
+2025/12/16 22:11:38 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:38 [req:27] POST /api/maturity/explain -> 200 (714B) in 0s
+2025/12/16 22:11:39 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:39 [req:28] POST /api/maturity/explain -> 200 (625B) in 0s
+2025/12/16 22:11:39 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:39 [req:29] POST /api/maturity/explain -> 200 (674B) in 0s
+2025/12/16 22:11:39 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:39 [req:30] POST /api/maturity/explain -> 200 (624B) in 0s
+2025/12/16 22:11:39 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:39 [req:31] POST /api/maturity/explain -> 200 (689B) in 0s
+2025/12/16 22:11:44 maturity evidence collected cluster=k10p in=35.388µs
+2025/12/16 22:11:44 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:44 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:44 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:44 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 22:11:44 maturity questions done cluster=k10p in=4.417381ms llmProvider= llmModel=
+2025/12/16 22:11:44 [req:32] POST /api/maturity/questions -> 200 (10327B) in 10ms
+2025/12/16 22:12:00 maturity evidence collected cluster=k10p in=32.104µs
+2025/12/16 22:12:20 openrouter <- decode failed status=200 bytes=506 truncated=false requestId=9af07d64d8f9c530-IST: context deadline exceeded; tail=""
+2025/12/16 22:12:20 openrouter <- decode failed status=200 bytes=506 truncated=false requestId=9af07d6519b1c530-IST: context deadline exceeded; tail=""
+2025/12/16 22:12:20 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): Post "https://openrouter.ai/api/v1/chat/completions": context deadline exceeded
+2025/12/16 22:12:20 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): Post "https://openrouter.ai/api/v1/chat/completions": context deadline exceeded
+2025/12/16 22:12:20 openrouter <- decode failed status=200 bytes=506 truncated=false requestId=9af07d64f959c530-IST: context deadline exceeded; tail=""
+2025/12/16 22:12:20 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): Post "https://openrouter.ai/api/v1/chat/completions": context deadline exceeded
+2025/12/16 22:12:20 maturity questions done cluster=k10p in=20.001958774s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 22:12:20 [req:33] POST /api/maturity/questions -> 200 (2643B) in 20.006s
+2025/12/16 22:13:21 maturity evidence collected cluster=k10p in=33.448µs
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded (Client.Timeout or context cancellation while reading body)
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded (Client.Timeout or context cancellation while reading body)
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:14:06 maturity analyze done cluster=k10p in=45.001239352s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 22:14:06 [req:34] POST /api/maturity/analyze -> 200 (59831B) in 45.021s
+2025/12/16 22:14:13 [req:36] POST /api/maturity/explain -> 200 (802B) in 6.906s
+2025/12/16 22:14:14 [req:35] POST /api/maturity/explain -> 200 (786B) in 7.886s
+2025/12/16 22:14:20 [req:39] POST /api/maturity/explain -> 200 (649B) in 5.506s
+2025/12/16 22:14:20 [req:38] POST /api/maturity/explain -> 200 (933B) in 7.188s
+2025/12/16 22:14:26 [req:41] POST /api/maturity/explain -> 200 (732B) in 5.872s
+2025/12/16 22:14:28 [req:40] POST /api/maturity/explain -> 200 (679B) in 8.346s
+2025/12/16 22:14:33 [req:42] POST /api/maturity/explain -> 200 (844B) in 6.469s
+2025/12/16 22:14:38 [req:43] POST /api/maturity/explain -> 200 (755B) in 9.408s
+2025/12/16 22:14:43 [req:44] POST /api/maturity/explain -> 200 (678B) in 9.467s
+2025/12/16 22:14:43 [req:45] POST /api/maturity/explain -> 200 (581B) in 4.887s
+2025/12/16 22:14:49 [req:47] POST /api/maturity/explain -> 200 (700B) in 6.465s
+2025/12/16 22:14:52 [req:46] POST /api/maturity/explain -> 200 (803B) in 8.88s
+2025/12/16 22:14:58 [req:48] POST /api/maturity/explain -> 200 (694B) in 8.849s
+2025/12/16 22:15:02 [req:49] POST /api/maturity/explain -> 200 (699B) in 9.643s
+2025/12/16 22:15:07 [req:51] POST /api/maturity/explain -> 200 (1015B) in 5.697s
+2025/12/16 22:15:09 [req:50] POST /api/maturity/explain -> 200 (700B) in 10.178s
+2025/12/16 22:15:14 [req:53] POST /api/maturity/explain -> 200 (795B) in 4.933s
+2025/12/16 22:15:19 [req:52] POST /api/maturity/explain -> 200 (698B) in 11.032s
+2025/12/16 22:15:19 [req:54] POST /api/maturity/explain -> 200 (468B) in 4.931s
+2025/12/16 22:15:36 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded (Client.Timeout or context cancellation while reading body)
+2025/12/16 22:15:36 [req:37] POST /api/maturity/explain -> 200 (758B) in 1m30.002s
+[2025-12-16 22:19:36] --- restart (rebuild) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/16 22:19:47 [req:1] GET / -> 200 (123365B) in 22ms
+2025/12/16 22:20:32 [req:2] GET / -> 200 (123365B) in 33ms
+2025/12/16 22:20:34 [req:3] GET /api/clusters -> 200 (12B) in 0s
+2025/12/16 22:20:34 [req:4] GET /api/namespaces -> 200 (118B) in 31ms
+2025/12/16 22:20:34 [req:5] GET /api/maturity/criteria -> 200 (21659B) in 6ms
+2025/12/16 22:20:35 [req:6] GET /favicon.ico -> 200 (123365B) in 22ms
+2025/12/16 22:20:45 [req:8] POST /api/cluster/upload -> 200 (52B) in 6ms
+2025/12/16 22:20:45 [req:9] GET /api/clusters -> 200 (19B) in 0s
+2025/12/16 22:20:45 [req:10] GET /api/namespaces -> 200 (3657B) in 283ms
+2025/12/16 22:20:49 [req:7] GET /api/maturity/evidence -> 200 (22889B) in 13.903s
+2025/12/16 22:21:01 [req:11] GET /api/maturity/evidence -> 200 (39380B) in 15.924s
+2025/12/16 22:21:04 [req:12] GET /api/maturity/criteria -> 200 (21659B) in 10ms
+2025/12/16 22:21:10 [req:13] POST /api/maturity/explain -> 200 (875B) in 5.804s
+2025/12/16 22:21:12 [req:15] POST /api/maturity/explain -> 200 (757B) in 7.095s
+2025/12/16 22:21:13 [req:14] POST /api/maturity/explain -> 200 (842B) in 8.864s
+2025/12/16 22:21:18 [req:16] POST /api/maturity/explain -> 200 (746B) in 7.708s
+2025/12/16 22:21:21 [req:17] POST /api/maturity/explain -> 200 (833B) in 8.898s
+2025/12/16 22:21:23 [req:18] POST /api/maturity/explain -> 200 (636B) in 9.469s
+2025/12/16 22:21:24 [req:22] GET /api/maturity/criteria -> 200 (21659B) in 3ms
+2025/12/16 22:21:25 [req:19] POST /api/maturity/explain -> 200 (711B) in 7.067s
+2025/12/16 22:21:28 [req:20] POST /api/maturity/explain -> 200 (674B) in 6.963s
+2025/12/16 22:21:32 [req:21] POST /api/maturity/explain -> 200 (843B) in 8.678s
+2025/12/16 22:21:35 [req:23] POST /api/maturity/explain -> 200 (782B) in 9.615s
+2025/12/16 22:21:39 [req:25] POST /api/maturity/explain -> 200 (666B) in 7.618s
+2025/12/16 22:21:41 [req:24] POST /api/maturity/explain -> 200 (757B) in 13.059s
+2025/12/16 22:21:44 maturity evidence collected cluster=k10p in=34.55µs
+2025/12/16 22:21:44 [req:26] POST /api/maturity/explain -> 200 (716B) in 8.724s
+2025/12/16 22:21:46 [req:27] POST /api/maturity/explain -> 200 (710B) in 6.894s
+2025/12/16 22:21:48 [req:28] POST /api/maturity/explain -> 200 (620B) in 6.6s
+2025/12/16 22:21:51 [req:30] POST /api/maturity/explain -> 200 (513B) in 6.86s
+2025/12/16 22:21:53 [req:32] POST /api/maturity/explain -> 200 (731B) in 5.293s
+2025/12/16 22:21:55 [req:31] POST /api/maturity/explain -> 200 (730B) in 8.948s
+2025/12/16 22:22:00 [req:33] POST /api/maturity/explain -> 200 (475B) in 9.651s
+2025/12/16 22:22:04 openrouter <- decode failed status=200 bytes=517 truncated=false requestId=9af08ba2cf9016f8-IST: context deadline exceeded (Client.Timeout or context cancellation while reading body); tail=""
+2025/12/16 22:22:04 openrouter <- decode failed status=200 bytes=517 truncated=false requestId=9af08ba2cf8d16f8-IST: context deadline exceeded (Client.Timeout or context cancellation while reading body); tail=""
+2025/12/16 22:22:04 openrouter <- decode failed status=200 bytes=517 truncated=false requestId=9af08ba2f81816f8-IST: context deadline exceeded (Client.Timeout or context cancellation while reading body); tail=""
+2025/12/16 22:22:04 openrouter <- decode failed status=200 bytes=517 truncated=false requestId=9af08ba2efc216f8-IST: context deadline exceeded (Client.Timeout or context cancellation while reading body); tail=""
+2025/12/16 22:22:24 openrouter <- decode failed status=200 bytes=517 truncated=false requestId=9af08c1fda7916f8-IST: context deadline exceeded (Client.Timeout or context cancellation while reading body); tail=""
+2025/12/16 22:22:24 openrouter <- decode failed status=200 bytes=517 truncated=false requestId=9af08c1ffad216f8-IST: context deadline exceeded (Client.Timeout or context cancellation while reading body); tail=""
+2025/12/16 22:22:24 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded (Client.Timeout or context cancellation while reading body)
+2025/12/16 22:22:24 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded (Client.Timeout or context cancellation while reading body)
+2025/12/16 22:22:24 openrouter <- decode failed status=200 bytes=517 truncated=false requestId=9af08c1feab516f8-IST: context deadline exceeded (Client.Timeout or context cancellation while reading body); tail=""
+2025/12/16 22:22:24 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded (Client.Timeout or context cancellation while reading body)
+2025/12/16 22:22:24 maturity questions done cluster=k10p in=40.005037604s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 22:22:24 [req:29] POST /api/maturity/questions -> 200 (4106B) in 40.008s
+2025/12/16 22:23:39 maturity evidence collected cluster=k10p in=37.917µs
+2025/12/16 22:24:01 maturity analyze done cluster=k10p in=22.003319964s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 22:24:01 [req:34] POST /api/maturity/analyze -> 200 (45316B) in 22.063s
+2025/12/16 22:24:08 [req:35] POST /api/maturity/explain -> 200 (910B) in 5.957s
+2025/12/16 22:24:12 [req:36] POST /api/maturity/explain -> 200 (1206B) in 9.948s
+2025/12/16 22:24:12 [req:37] POST /api/maturity/explain -> 200 (789B) in 10.004s
+2025/12/16 22:24:15 [req:38] POST /api/maturity/explain -> 200 (801B) in 6.627s
+2025/12/16 22:24:21 [req:40] POST /api/maturity/explain -> 200 (822B) in 8.715s
+2025/12/16 22:24:24 [req:41] POST /api/maturity/explain -> 200 (818B) in 8.684s
+2025/12/16 22:24:24 [req:39] POST /api/maturity/explain -> 200 (864B) in 11.433s
+2025/12/16 22:24:29 [req:42] POST /api/maturity/explain -> 200 (597B) in 7.894s
+2025/12/16 22:24:33 [req:43] POST /api/maturity/explain -> 200 (684B) in 8.903s
+2025/12/16 22:24:33 [req:44] POST /api/maturity/explain -> 200 (787B) in 8.831s
+2025/12/16 22:24:34 [req:45] POST /api/maturity/explain -> 200 (780B) in 4.691s
+2025/12/16 22:24:41 [req:48] POST /api/maturity/explain -> 200 (667B) in 6.869s
+2025/12/16 22:24:41 [req:46] POST /api/maturity/explain -> 200 (562B) in 8.239s
+2025/12/16 22:24:42 [req:47] POST /api/maturity/explain -> 200 (565B) in 9.12s
+2025/12/16 22:24:50 [req:50] POST /api/maturity/explain -> 200 (648B) in 7.594s
+2025/12/16 22:24:51 [req:49] POST /api/maturity/explain -> 200 (744B) in 9.425s
+2025/12/16 22:24:51 [req:51] POST /api/maturity/explain -> 200 (680B) in 8.732s
+2025/12/16 22:24:58 [req:53] POST /api/maturity/explain -> 200 (869B) in 6.666s
+2025/12/16 22:25:00 [req:52] POST /api/maturity/explain -> 200 (701B) in 10.493s
+2025/12/16 22:25:01 [req:54] POST /api/maturity/explain -> 200 (809B) in 9.206s
+2025/12/16 22:25:06 [req:57] POST /api/maturity/explain -> 200 (557B) in 4.272s
+2025/12/16 22:25:08 [req:55] POST /api/maturity/explain -> 200 (786B) in 9.653s
+2025/12/16 22:25:09 [req:56] POST /api/maturity/explain -> 200 (603B) in 8.403s
+[2025-12-16 22:25:44] --- restart (llm tweaks) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/16 22:25:47 [req:1] GET / -> 200 (123365B) in 23ms
+2025/12/16 22:26:34 [req:2] GET / -> 200 (123365B) in 34ms
+2025/12/16 22:26:37 [req:3] GET /api/clusters -> 200 (12B) in 0s
+2025/12/16 22:26:37 [req:4] GET /api/namespaces -> 200 (118B) in 45ms
+2025/12/16 22:26:37 [req:5] GET /api/maturity/criteria -> 200 (21659B) in 65ms
+2025/12/16 22:26:37 [req:6] GET /favicon.ico -> 200 (123365B) in 52ms
+2025/12/16 22:26:47 [req:8] POST /api/cluster/upload -> 200 (52B) in 6ms
+2025/12/16 22:26:47 [req:9] GET /api/clusters -> 200 (19B) in 0s
+2025/12/16 22:26:47 [req:10] GET /api/namespaces -> 200 (3657B) in 331ms
+2025/12/16 22:26:51 [req:7] GET /api/maturity/evidence -> 200 (22889B) in 13.294s
+2025/12/16 22:27:15 [req:11] GET /api/maturity/evidence -> 200 (39381B) in 27.169s
+2025/12/16 22:27:21 [req:12] GET /api/maturity/criteria -> 200 (21659B) in 9ms
+2025/12/16 22:27:29 [req:13] POST /api/maturity/explain -> 200 (831B) in 7.84s
+2025/12/16 22:27:30 [req:14] POST /api/maturity/explain -> 200 (817B) in 9.328s
+2025/12/16 22:27:35 [req:15] POST /api/maturity/explain -> 200 (759B) in 13.975s
+2025/12/16 22:27:38 [req:16] POST /api/maturity/explain -> 200 (704B) in 9.433s
+2025/12/16 22:27:40 maturity evidence collected cluster=k10p in=44.756µs
+2025/12/16 22:27:41 [req:17] POST /api/maturity/explain -> 200 (744B) in 10.283s
+2025/12/16 22:27:43 [req:18] POST /api/maturity/explain -> 200 (677B) in 7.61s
+2025/12/16 22:27:49 [req:22] POST /api/maturity/explain -> 200 (820B) in 5.962s
+2025/12/16 22:27:49 [req:19] POST /api/maturity/explain -> 200 (738B) in 10.87s
+2025/12/16 22:27:49 [req:21] POST /api/maturity/explain -> 200 (711B) in 8.566s
+2025/12/16 22:27:50 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): invalid character '<' looking for beginning of value
+2025/12/16 22:27:50 [req:25] POST /api/maturity/explain -> 200 (627B) in 55ms
+2025/12/16 22:27:59 [req:26] POST /api/maturity/explain -> 200 (646B) in 8.911s
+2025/12/16 22:27:59 [req:23] POST /api/maturity/explain -> 200 (620B) in 10.127s
+2025/12/16 22:28:00 [req:24] POST /api/maturity/explain -> 200 (836B) in 10.165s
+2025/12/16 22:28:07 [req:28] POST /api/maturity/explain -> 200 (721B) in 8.073s
+2025/12/16 22:28:08 [req:27] POST /api/maturity/explain -> 200 (791B) in 8.797s
+2025/12/16 22:28:10 [req:29] POST /api/maturity/explain -> 200 (778B) in 10.233s
+2025/12/16 22:28:15 [req:30] POST /api/maturity/explain -> 200 (734B) in 7.335s
+2025/12/16 22:28:18 [req:31] POST /api/maturity/explain -> 200 (831B) in 10.154s
+2025/12/16 22:28:40 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:28:40 maturity questions done cluster=k10p in=1m0.000991314s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 22:28:40 [req:20] POST /api/maturity/questions -> 200 (8578B) in 1m0.004s
+2025/12/16 22:30:28 maturity evidence collected cluster=k10p in=40.184106961s
+2025/12/16 22:30:51 maturity analyze done cluster=k10p in=22.846222134s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 22:30:51 [req:32] POST /api/maturity/analyze -> 200 (46428B) in 1m3.04s
+2025/12/16 22:30:59 [req:35] POST /api/maturity/explain -> 200 (943B) in 6.785s
+2025/12/16 22:31:01 [req:34] POST /api/maturity/explain -> 200 (691B) in 8.369s
+2025/12/16 22:31:03 [req:33] POST /api/maturity/explain -> 200 (704B) in 10.983s
+2025/12/16 22:31:05 [req:36] POST /api/maturity/explain -> 200 (714B) in 5.787s
+2025/12/16 22:31:07 [req:37] POST /api/maturity/explain -> 200 (737B) in 6.203s
+2025/12/16 22:31:10 [req:38] POST /api/maturity/explain -> 200 (864B) in 6.754s
+2025/12/16 22:31:14 [req:39] POST /api/maturity/explain -> 200 (890B) in 8.551s
+2025/12/16 22:31:15 [req:40] POST /api/maturity/explain -> 200 (698B) in 7.508s
+2025/12/16 22:31:18 [req:41] POST /api/maturity/explain -> 200 (794B) in 7.212s
+2025/12/16 22:31:21 [req:42] POST /api/maturity/explain -> 200 (712B) in 7.054s
+2025/12/16 22:31:22 [req:43] POST /api/maturity/explain -> 200 (734B) in 7.334s
+2025/12/16 22:31:24 [req:44] POST /api/maturity/explain -> 200 (739B) in 5.838s
+2025/12/16 22:31:29 [req:45] POST /api/maturity/explain -> 200 (659B) in 7.83s
+2025/12/16 22:31:32 [req:46] POST /api/maturity/explain -> 200 (769B) in 9.413s
+2025/12/16 22:31:34 [req:47] POST /api/maturity/explain -> 200 (962B) in 9.396s
+2025/12/16 22:31:36 [req:48] POST /api/maturity/explain -> 200 (815B) in 6.6s
+2025/12/16 22:31:39 [req:49] POST /api/maturity/explain -> 200 (763B) in 6.895s
+2025/12/16 22:31:46 [req:52] POST /api/maturity/explain -> 200 (668B) in 6.676s
+2025/12/16 22:31:46 [req:50] POST /api/maturity/explain -> 200 (765B) in 12.168s
+2025/12/16 22:31:47 [req:51] POST /api/maturity/explain -> 200 (823B) in 10.426s
+2025/12/16 22:31:53 [req:53] POST /api/maturity/explain -> 200 (666B) in 6.405s
+2025/12/16 22:31:53 [req:54] POST /api/maturity/explain -> 200 (672B) in 6.54s
+2025/12/16 22:31:54 [req:55] POST /api/maturity/explain -> 200 (629B) in 6.835s
+[2025-12-16 22:32:18] --- restart (explain/html+questions) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/16 22:32:21 [req:1] GET / -> 200 (123365B) in 26ms
+2025/12/16 22:33:19 [req:2] GET / -> 200 (123365B) in 25ms
+2025/12/16 22:33:20 [req:3] GET /api/clusters -> 200 (12B) in 0s
+2025/12/16 22:33:21 [req:4] GET /api/namespaces -> 200 (118B) in 27ms
+2025/12/16 22:33:21 [req:5] GET /api/maturity/criteria -> 200 (21659B) in 72ms
+2025/12/16 22:33:21 [req:6] GET /favicon.ico -> 200 (123365B) in 34ms
+2025/12/16 22:33:33 [req:8] POST /api/cluster/upload -> 200 (52B) in 2ms
+2025/12/16 22:33:33 [req:9] GET /api/clusters -> 200 (19B) in 0s
+2025/12/16 22:33:33 [req:10] GET /api/namespaces -> 200 (3657B) in 273ms
+2025/12/16 22:33:35 [req:7] GET /api/maturity/evidence -> 200 (22883B) in 13.45s
+2025/12/16 22:33:50 [req:11] GET /api/maturity/evidence -> 200 (39381B) in 16.711s
+2025/12/16 22:33:54 [req:12] GET /api/maturity/criteria -> 200 (21659B) in 12ms
+2025/12/16 22:33:59 maturity evidence collected cluster=k10p in=36.148µs
+2025/12/16 22:33:59 [req:14] POST /api/maturity/explain -> 200 (742B) in 4.847s
+2025/12/16 22:34:01 [req:13] POST /api/maturity/explain -> 200 (775B) in 6.956s
+2025/12/16 22:34:03 [req:15] POST /api/maturity/explain -> 200 (669B) in 8.493s
+2025/12/16 22:34:07 [req:17] POST /api/maturity/explain -> 200 (909B) in 8.128s
+2025/12/16 22:34:08 [req:18] POST /api/maturity/explain -> 200 (827B) in 6.888s
+2025/12/16 22:34:12 [req:19] POST /api/maturity/explain -> 200 (660B) in 9.232s
+2025/12/16 22:34:15 [req:20] POST /api/maturity/explain -> 200 (662B) in 7.817s
+2025/12/16 22:34:17 [req:21] POST /api/maturity/explain -> 200 (774B) in 8.988s
+2025/12/16 22:34:19 [req:22] POST /api/maturity/explain -> 200 (758B) in 7.403s
+2025/12/16 22:34:24 [req:23] POST /api/maturity/explain -> 200 (810B) in 8.315s
+2025/12/16 22:34:25 [req:24] POST /api/maturity/explain -> 200 (659B) in 7.913s
+2025/12/16 22:34:28 [req:25] POST /api/maturity/explain -> 200 (750B) in 8.905s
+2025/12/16 22:34:32 [req:26] POST /api/maturity/explain -> 200 (673B) in 8.615s
+2025/12/16 22:34:35 [req:27] POST /api/maturity/explain -> 200 (731B) in 9.553s
+2025/12/16 22:34:37 [req:28] POST /api/maturity/explain -> 200 (796B) in 8.556s
+2025/12/16 22:34:41 [req:30] POST /api/maturity/explain -> 200 (665B) in 6.156s
+2025/12/16 22:34:43 [req:29] POST /api/maturity/explain -> 200 (723B) in 10.942s
+2025/12/16 22:34:49 [req:31] POST /api/maturity/explain -> 200 (930B) in 12.063s
+2025/12/16 22:35:29 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:35:29 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:35:29 maturity questions done cluster=k10p in=1m30.001133615s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 22:35:29 [req:16] POST /api/maturity/questions -> 200 (7654B) in 1m30.005s
+2025/12/16 22:36:29 maturity evidence collected cluster=k10p in=31.961µs
+2025/12/16 22:36:43 maturity analyze done cluster=k10p in=13.933141001s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 22:36:43 [req:32] POST /api/maturity/analyze -> 200 (43107B) in 13.95s
+2025/12/16 22:36:52 [req:33] POST /api/maturity/explain -> 200 (779B) in 9.089s
+2025/12/16 22:36:53 [req:34] POST /api/maturity/explain -> 200 (1069B) in 10.112s
+2025/12/16 22:36:55 [req:35] POST /api/maturity/explain -> 200 (1159B) in 11.917s
+2025/12/16 22:36:59 [req:36] POST /api/maturity/explain -> 200 (674B) in 6.812s
+2025/12/16 22:37:02 [req:38] POST /api/maturity/explain -> 200 (1115B) in 6.802s
+2025/12/16 22:37:05 [req:37] POST /api/maturity/explain -> 200 (781B) in 11.659s
+2025/12/16 22:37:06 [req:39] POST /api/maturity/explain -> 200 (681B) in 7.109s
+2025/12/16 22:37:12 [req:40] POST /api/maturity/explain -> 200 (879B) in 9.923s
+2025/12/16 22:37:13 [req:42] POST /api/maturity/explain -> 200 (637B) in 6.795s
+2025/12/16 22:37:14 [req:41] POST /api/maturity/explain -> 200 (953B) in 8.36s
+2025/12/16 22:37:19 [req:43] POST /api/maturity/explain -> 200 (659B) in 6.418s
+2025/12/16 22:37:20 [req:44] POST /api/maturity/explain -> 200 (588B) in 7.118s
+2025/12/16 22:37:22 [req:45] POST /api/maturity/explain -> 200 (590B) in 7.987s
+2025/12/16 22:37:28 [req:46] POST /api/maturity/explain -> 200 (806B) in 9.262s
+2025/12/16 22:37:30 [req:48] POST /api/maturity/explain -> 200 (926B) in 8.074s
+2025/12/16 22:37:30 [req:47] POST /api/maturity/explain -> 200 (790B) in 9.594s
+2025/12/16 22:37:35 [req:49] POST /api/maturity/explain -> 200 (844B) in 7.155s
+2025/12/16 22:37:38 [req:50] POST /api/maturity/explain -> 200 (650B) in 7.83s
+2025/12/16 22:37:39 [req:51] POST /api/maturity/explain -> 200 (757B) in 8.694s
+2025/12/16 22:37:43 [req:53] POST /api/maturity/explain -> 200 (864B) in 5.554s
+2025/12/16 22:37:46 [req:52] POST /api/maturity/explain -> 200 (1064B) in 10.663s
+2025/12/16 22:37:47 [req:56] POST /api/maturity/explain -> 200 (326B) in 1.362s
+2025/12/16 22:37:52 [req:55] POST /api/maturity/explain -> 200 (626B) in 8.074s
+2025/12/16 22:37:57 [req:54] POST /api/maturity/explain -> 200 (778B) in 17.915s
+[2025-12-16 22:38:54] --- restart (questions budget) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/16 22:38:58 [req:1] GET / -> 200 (123365B) in 32ms
+2025/12/16 22:39:31 [req:2] GET / -> 200 (123365B) in 28ms
+2025/12/16 22:39:32 [req:3] GET /api/clusters -> 200 (12B) in 0s
+2025/12/16 22:39:33 [req:4] GET /api/namespaces -> 200 (118B) in 50ms
+2025/12/16 22:39:33 [req:6] GET /api/maturity/criteria -> 200 (21659B) in 33ms
+2025/12/16 22:39:33 [req:5] GET /favicon.ico -> 200 (123365B) in 52ms
+2025/12/16 22:39:43 [req:8] POST /api/cluster/upload -> 200 (52B) in 6ms
+2025/12/16 22:39:43 [req:9] GET /api/clusters -> 200 (19B) in 0s
+2025/12/16 22:39:43 [req:10] GET /api/namespaces -> 200 (3657B) in 152ms
+2025/12/16 22:39:47 [req:7] GET /api/maturity/evidence -> 200 (22889B) in 13.981s
+2025/12/16 22:40:00 [req:11] GET /api/maturity/evidence -> 200 (39381B) in 16.388s
+2025/12/16 22:40:02 [req:12] GET /api/maturity/criteria -> 200 (21659B) in 7ms
+2025/12/16 22:40:08 [req:13] POST /api/maturity/explain -> 200 (683B) in 5.787s
+2025/12/16 22:40:08 [req:15] POST /api/maturity/explain -> 200 (829B) in 6.275s
+2025/12/16 22:40:11 maturity evidence collected cluster=k10p in=34.893µs
+2025/12/16 22:40:12 [req:14] POST /api/maturity/explain -> 200 (987B) in 9.391s
+2025/12/16 22:40:18 [req:16] POST /api/maturity/explain -> 200 (658B) in 9.699s
+2025/12/16 22:40:20 [req:19] POST /api/maturity/explain -> 200 (661B) in 8.279s
+2025/12/16 22:40:20 [req:17] POST /api/maturity/explain -> 200 (834B) in 11.47s
+2025/12/16 22:40:27 [req:20] POST /api/maturity/explain -> 200 (675B) in 9.547s
+2025/12/16 22:40:28 [req:22] POST /api/maturity/explain -> 200 (769B) in 7.61s
+2025/12/16 22:40:28 [req:21] POST /api/maturity/explain -> 200 (748B) in 8.128s
+2025/12/16 22:40:34 [req:23] POST /api/maturity/explain -> 200 (657B) in 6.466s
+2025/12/16 22:40:36 [req:25] POST /api/maturity/explain -> 200 (824B) in 7.54s
+2025/12/16 22:40:36 [req:24] POST /api/maturity/explain -> 200 (854B) in 8.363s
+2025/12/16 22:40:43 [req:26] POST /api/maturity/explain -> 200 (725B) in 8.851s
+2025/12/16 22:40:44 [req:28] POST /api/maturity/explain -> 200 (623B) in 7.667s
+2025/12/16 22:40:45 [req:27] POST /api/maturity/explain -> 200 (736B) in 8.922s
+2025/12/16 22:40:50 [req:29] POST /api/maturity/explain -> 200 (784B) in 7.352s
+2025/12/16 22:40:50 [req:30] POST /api/maturity/explain -> 200 (638B) in 6.39s
+2025/12/16 22:40:52 [req:31] POST /api/maturity/explain -> 200 (739B) in 6.788s
+2025/12/16 22:40:55 [req:32] POST /api/maturity/explain -> 200 (353B) in 4.693s
+2025/12/16 22:43:11 LLM precheck questions failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): context deadline exceeded
+2025/12/16 22:43:11 maturity questions done cluster=k10p in=3m0.00162665s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 22:43:11 [req:18] POST /api/maturity/questions -> 200 (12674B) in 3m0.006s
+2025/12/16 22:44:36 maturity evidence collected cluster=k10p in=15.134238882s
+2025/12/16 22:44:55 maturity analyze done cluster=k10p in=18.833199415s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 22:44:55 [req:33] POST /api/maturity/analyze -> 200 (42769B) in 33.979s
+2025/12/16 22:45:01 [req:35] POST /api/maturity/explain -> 200 (933B) in 5.822s
+2025/12/16 22:45:04 [req:36] POST /api/maturity/explain -> 200 (695B) in 8.422s
+2025/12/16 22:45:06 [req:34] POST /api/maturity/explain -> 200 (783B) in 10.428s
+2025/12/16 22:45:12 [req:37] POST /api/maturity/explain -> 200 (838B) in 11.219s
+2025/12/16 22:45:13 [req:39] POST /api/maturity/explain -> 200 (728B) in 7.203s
+2025/12/16 22:45:16 [req:38] POST /api/maturity/explain -> 200 (725B) in 12.27s
+2025/12/16 22:45:18 [req:40] POST /api/maturity/explain -> 200 (811B) in 5.766s
+2025/12/16 22:45:21 [req:41] POST /api/maturity/explain -> 200 (723B) in 7.57s
+2025/12/16 22:45:22 [req:42] POST /api/maturity/explain -> 200 (628B) in 6.131s
+2025/12/16 22:45:26 [req:43] POST /api/maturity/explain -> 200 (687B) in 7.412s
+2025/12/16 22:45:29 [req:44] POST /api/maturity/explain -> 200 (757B) in 8.338s
+2025/12/16 22:45:30 [req:45] POST /api/maturity/explain -> 200 (685B) in 7.513s
+2025/12/16 22:45:35 [req:46] POST /api/maturity/explain -> 200 (737B) in 9.064s
+2025/12/16 22:45:37 [req:47] POST /api/maturity/explain -> 200 (666B) in 7.816s
+2025/12/16 22:45:42 [req:48] POST /api/maturity/explain -> 200 (878B) in 11.699s
+2025/12/16 22:45:42 [req:49] POST /api/maturity/explain -> 200 (769B) in 7.193s
+2025/12/16 22:45:48 [req:50] POST /api/maturity/explain -> 200 (696B) in 10.58s
+2025/12/16 22:45:49 [req:52] POST /api/maturity/explain -> 200 (640B) in 6.523s
+2025/12/16 22:45:50 [req:51] POST /api/maturity/explain -> 200 (701B) in 8.33s
+2025/12/16 22:45:55 [req:53] POST /api/maturity/explain -> 200 (691B) in 6.602s
+2025/12/16 22:45:57 [req:54] POST /api/maturity/explain -> 200 (774B) in 7.936s
+2025/12/16 22:46:00 [req:55] POST /api/maturity/explain -> 200 (752B) in 9.326s
+2025/12/16 22:46:02 [req:57] POST /api/maturity/explain -> 200 (392B) in 4.453s
+2025/12/16 22:46:05 [req:56] POST /api/maturity/explain -> 200 (820B) in 10.218s
+[2025-12-16 22:50:39] --- restart (manual) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/16 22:50:44 [req:1] GET / -> 200 (123365B) in 16ms
+2025/12/16 22:51:04 [req:2] GET / -> 200 (123365B) in 37ms
+2025/12/16 22:51:06 [req:3] GET /api/clusters -> 200 (12B) in 0s
+2025/12/16 22:51:07 [req:4] GET /api/namespaces -> 200 (118B) in 32ms
+2025/12/16 22:51:07 [req:5] GET /api/maturity/criteria -> 200 (21659B) in 8ms
+2025/12/16 22:51:08 [req:7] GET /favicon.ico -> 200 (123365B) in 32ms
+2025/12/16 22:51:20 [req:6] GET /api/maturity/evidence -> 200 (22884B) in 13.087s
+2025/12/16 22:51:24 [req:8] POST /api/cluster/upload -> 200 (52B) in 5ms
+2025/12/16 22:51:24 [req:9] GET /api/clusters -> 200 (19B) in 0s
+2025/12/16 22:51:24 [req:10] GET /api/namespaces -> 200 (3657B) in 223ms
+2025/12/16 22:51:40 [req:11] GET /api/maturity/evidence -> 200 (39381B) in 15.55s
+2025/12/16 22:51:46 [req:12] GET /api/maturity/criteria -> 200 (21659B) in 6ms
+2025/12/16 22:51:54 [req:14] POST /api/maturity/explain -> 200 (649B) in 8.105s
+2025/12/16 22:51:55 [req:13] POST /api/maturity/explain -> 200 (836B) in 8.714s
+2025/12/16 22:51:56 maturity evidence collected cluster=k10p in=32.147µs
+2025/12/16 22:51:57 [req:15] POST /api/maturity/explain -> 200 (988B) in 10.936s
+2025/12/16 22:52:00 [req:17] POST /api/maturity/explain -> 200 (816B) in 5.71s
+2025/12/16 22:52:02 [req:16] POST /api/maturity/explain -> 200 (812B) in 8.103s
+2025/12/16 22:52:03 [req:19] POST /api/maturity/explain -> 200 (653B) in 6.338s
+2025/12/16 22:52:09 [req:21] POST /api/maturity/explain -> 200 (709B) in 6.359s
+2025/12/16 22:52:09 [req:20] POST /api/maturity/explain -> 200 (726B) in 8.512s
+2025/12/16 22:52:11 [req:22] POST /api/maturity/explain -> 200 (791B) in 7.422s
+2025/12/16 22:52:15 [req:24] POST /api/maturity/explain -> 200 (799B) in 6.204s
+2025/12/16 22:52:18 [req:23] POST /api/maturity/explain -> 200 (721B) in 9.437s
+2025/12/16 22:52:18 [req:25] POST /api/maturity/explain -> 200 (679B) in 7.431s
+2025/12/16 22:52:22 [req:26] POST /api/maturity/explain -> 200 (644B) in 6.65s
+2025/12/16 22:52:27 [req:28] POST /api/maturity/explain -> 200 (751B) in 8.489s
+2025/12/16 22:52:28 [req:27] POST /api/maturity/explain -> 200 (799B) in 9.4s
+2025/12/16 22:52:30 [req:29] POST /api/maturity/explain -> 200 (849B) in 7.663s
+2025/12/16 22:52:35 [req:31] POST /api/maturity/explain -> 200 (868B) in 7.29s
+2025/12/16 22:52:35 [req:30] POST /api/maturity/explain -> 200 (738B) in 8.482s
+2025/12/16 22:55:44 maturity questions done cluster=k10p in=3m48.493603572s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 22:55:44 [req:18] POST /api/maturity/questions -> 200 (16302B) in 3m48.497s
+2025/12/16 22:57:32 maturity evidence collected cluster=k10p in=19.08038158s
+2025/12/16 22:57:51 maturity analyze done cluster=k10p in=18.980495577s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 22:57:51 [req:32] POST /api/maturity/analyze -> 200 (43916B) in 38.076s
+2025/12/16 22:57:57 [req:34] POST /api/maturity/explain -> 200 (772B) in 6.096s
+2025/12/16 22:57:59 [req:33] POST /api/maturity/explain -> 200 (849B) in 7.666s
+2025/12/16 22:58:01 [req:35] POST /api/maturity/explain -> 200 (748B) in 9.469s
+2025/12/16 22:58:06 [req:36] POST /api/maturity/explain -> 200 (703B) in 8.35s
+2025/12/16 22:58:13 [req:38] POST /api/maturity/explain -> 200 (993B) in 12.162s
+2025/12/16 22:58:14 [req:37] POST /api/maturity/explain -> 200 (870B) in 15.045s
+2025/12/16 22:58:16 [req:39] POST /api/maturity/explain -> 200 (807B) in 10.035s
+2025/12/16 22:58:20 [req:40] POST /api/maturity/explain -> 200 (826B) in 6.823s
+2025/12/16 22:58:22 [req:41] POST /api/maturity/explain -> 200 (783B) in 8.025s
+2025/12/16 22:58:23 [req:42] POST /api/maturity/explain -> 200 (730B) in 6.938s
+2025/12/16 22:58:25 [req:43] POST /api/maturity/explain -> 200 (746B) in 4.697s
+2025/12/16 22:58:30 [req:45] POST /api/maturity/explain -> 200 (647B) in 6.472s
+2025/12/16 22:58:30 [req:44] POST /api/maturity/explain -> 200 (567B) in 7.673s
+2025/12/16 22:58:32 [req:46] POST /api/maturity/explain -> 200 (917B) in 6.99s
+2025/12/16 22:58:37 [req:47] POST /api/maturity/explain -> 200 (666B) in 6.867s
+2025/12/16 22:58:38 [req:49] POST /api/maturity/explain -> 200 (788B) in 6.252s
+2025/12/16 22:58:40 [req:48] POST /api/maturity/explain -> 200 (801B) in 9.514s
+2025/12/16 22:58:43 [req:50] POST /api/maturity/explain -> 200 (882B) in 6.247s
+2025/12/16 22:58:47 [req:51] POST /api/maturity/explain -> 200 (830B) in 9.227s
+2025/12/16 22:58:48 [req:52] POST /api/maturity/explain -> 200 (830B) in 8.101s
+2025/12/16 22:58:50 [req:53] POST /api/maturity/explain -> 200 (793B) in 7.03s
+2025/12/16 22:58:56 [req:54] POST /api/maturity/explain -> 200 (861B) in 8.016s
+2025/12/16 22:58:58 [req:56] POST /api/maturity/explain -> 200 (697B) in 7.516s
+2025/12/16 22:58:59 [req:55] POST /api/maturity/explain -> 200 (716B) in 11.17s
+2025/12/16 22:59:53 [req:57] POST /api/maturity/report/pdf -> 200 (22547B) in 17.665s
+[2025-12-16 23:09:07] --- restart (pdf fonts) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/16 23:09:11 [req:1] GET / -> 200 (123365B) in 22ms
+2025/12/16 23:09:19 [req:3] GET / -> 200 (123365B) in 33ms
+2025/12/16 23:09:19 [req:4] GET /static/style.css -> 304 (0B) in 7ms
+2025/12/16 23:09:21 [req:5] GET /api/clusters -> 200 (12B) in 0s
+2025/12/16 23:09:21 [req:6] GET /api/namespaces -> 200 (118B) in 14ms
+2025/12/16 23:09:22 [req:7] GET /api/maturity/criteria -> 200 (21659B) in 9ms
+2025/12/16 23:09:22 [req:9] GET /favicon.ico -> 200 (123365B) in 35ms
+2025/12/16 23:09:26 [req:2] POST /api/maturity/report/pdf -> 500 (131B) in 14.289s
+2025/12/16 23:09:31 [req:10] POST /api/cluster/upload -> 200 (52B) in 6ms
+2025/12/16 23:09:31 [req:11] GET /api/clusters -> 200 (19B) in 0s
+2025/12/16 23:09:31 [req:12] GET /api/namespaces -> 200 (3657B) in 765ms
+2025/12/16 23:09:37 [req:14] POST /api/maturity/report/pdf -> 500 (131B) in 7ms
+2025/12/16 23:09:38 [req:8] GET /api/maturity/evidence -> 200 (22884B) in 15.954s
+2025/12/16 23:09:53 [req:15] GET /api/maturity/criteria -> 200 (21659B) in 7ms
+2025/12/16 23:10:01 [req:17] POST /api/maturity/explain -> 200 (746B) in 7.437s
+2025/12/16 23:10:03 [req:18] POST /api/maturity/explain -> 200 (804B) in 10.033s
+2025/12/16 23:10:04 [req:16] POST /api/maturity/explain -> 200 (671B) in 10.252s
+2025/12/16 23:10:07 [req:19] POST /api/maturity/explain -> 200 (725B) in 6.102s
+2025/12/16 23:10:10 [req:20] POST /api/maturity/explain -> 200 (726B) in 6.773s
+2025/12/16 23:10:10 [req:21] POST /api/maturity/explain -> 200 (623B) in 6.656s
+2025/12/16 23:10:17 [req:22] POST /api/maturity/explain -> 200 (834B) in 9.588s
+2025/12/16 23:10:18 [req:23] POST /api/maturity/explain -> 200 (707B) in 7.11s
+2025/12/16 23:10:21 [req:27] GET /api/maturity/criteria -> 200 (21659B) in 6ms
+2025/12/16 23:10:23 [req:24] POST /api/maturity/explain -> 200 (870B) in 11.973s
+2025/12/16 23:10:24 [req:25] POST /api/maturity/explain -> 200 (596B) in 7.123s
+2025/12/16 23:10:24 [req:26] POST /api/maturity/explain -> 200 (721B) in 6.779s
+2025/12/16 23:10:32 [req:29] POST /api/maturity/explain -> 200 (615B) in 7.577s
+2025/12/16 23:10:33 [req:28] POST /api/maturity/explain -> 200 (726B) in 9.692s
+[2025-12-16 23:10:36] --- restart (pdf font bytes) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/16 23:10:39 [req:1] GET / -> 200 (123365B) in 32ms
+2025/12/16 23:10:43 [req:6] GET / -> 200 (123365B) in 32ms
+2025/12/16 23:10:43 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): openrouter JSON decode failed (status=200): context canceled; body="(non-text body)"
+2025/12/16 23:10:43 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): openrouter JSON decode failed (status=200): context canceled; body="(non-text body)"
+2025/12/16 23:10:43 [req:2] POST /api/maturity/explain -> 200 (642B) in 4.299s
+2025/12/16 23:10:43 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): openrouter JSON decode failed (status=200): context canceled; body="(non-text body)"
+2025/12/16 23:10:43 [req:4] POST /api/maturity/explain -> 200 (445B) in 4.076s
+2025/12/16 23:10:43 [req:5] POST /api/maturity/explain -> 200 (653B) in 3.948s
+2025/12/16 23:10:44 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): Post "https://openrouter.ai/api/v1/chat/completions": context canceled
+2025/12/16 23:10:44 [req:9] POST /api/maturity/explain -> 200 (639B) in 9ms
+2025/12/16 23:10:44 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): Post "https://openrouter.ai/api/v1/chat/completions": context canceled
+2025/12/16 23:10:44 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): Post "https://openrouter.ai/api/v1/chat/completions": context canceled
+2025/12/16 23:10:44 [req:8] POST /api/maturity/explain -> 200 (431B) in 127ms
+2025/12/16 23:10:44 [req:7] POST /api/maturity/explain -> 200 (628B) in 236ms
+2025/12/16 23:10:45 [req:10] GET /api/clusters -> 200 (12B) in 0s
+2025/12/16 23:10:46 [req:11] GET /api/namespaces -> 200 (118B) in 30ms
+2025/12/16 23:10:46 [req:13] GET /api/maturity/criteria -> 200 (21659B) in 5ms
+2025/12/16 23:10:46 [req:12] GET /favicon.ico -> 200 (123365B) in 48ms
+2025/12/16 23:10:55 [req:3] POST /api/maturity/report/pdf -> 200 (104592B) in 15.397s
+2025/12/16 23:10:57 [req:15] POST /api/cluster/upload -> 200 (52B) in 1ms
+2025/12/16 23:10:57 [req:16] GET /api/clusters -> 200 (19B) in 0s
+2025/12/16 23:10:58 [req:17] GET /api/namespaces -> 200 (3657B) in 1.254s
+2025/12/16 23:11:06 [req:14] GET /api/maturity/evidence -> 200 (22889B) in 19.407s
+2025/12/16 23:12:03 [req:19] GET /api/maturity/criteria -> 200 (21659B) in 9ms
+2025/12/16 23:12:09 [req:20] POST /api/maturity/explain -> 200 (643B) in 5.689s
+2025/12/16 23:12:10 [req:18] GET /api/maturity/evidence -> 200 (39358B) in 1m11.155s
+2025/12/16 23:12:11 [req:22] POST /api/maturity/explain -> 200 (669B) in 7.502s
+2025/12/16 23:12:13 [req:21] POST /api/maturity/explain -> 200 (715B) in 9.337s
+2025/12/16 23:12:15 [req:23] POST /api/maturity/explain -> 200 (698B) in 5.504s
+2025/12/16 23:12:16 [req:24] POST /api/maturity/explain -> 200 (597B) in 5.677s
+2025/12/16 23:12:19 [req:25] POST /api/maturity/explain -> 200 (560B) in 6.218s
+2025/12/16 23:12:22 [req:27] POST /api/maturity/explain -> 200 (748B) in 5.853s
+2025/12/16 23:12:26 [req:26] POST /api/maturity/explain -> 200 (727B) in 11.239s
+2025/12/16 23:12:28 [req:28] POST /api/maturity/explain -> 200 (643B) in 8.884s
+2025/12/16 23:12:28 [req:29] POST /api/maturity/explain -> 200 (589B) in 5.382s
+2025/12/16 23:12:31 [req:33] GET /api/maturity/criteria -> 200 (21659B) in 9ms
+2025/12/16 23:12:34 [req:31] POST /api/maturity/explain -> 200 (808B) in 5.913s
+2025/12/16 23:12:37 [req:32] POST /api/maturity/explain -> 200 (817B) in 9.094s
+2025/12/16 23:12:37 [req:30] POST /api/maturity/explain -> 200 (769B) in 11.326s
+2025/12/16 23:12:44 [req:34] POST /api/maturity/explain -> 200 (779B) in 10.296s
+2025/12/16 23:12:46 [req:36] POST /api/maturity/explain -> 200 (462B) in 8.703s
+2025/12/16 23:12:47 [req:35] POST /api/maturity/explain -> 200 (694B) in 10.032s
+2025/12/16 23:12:53 [req:39] POST /api/maturity/explain -> 200 (554B) in 5.584s
+2025/12/16 23:12:53 [req:37] POST /api/maturity/explain -> 200 (666B) in 8.607s
+2025/12/16 23:12:55 [req:38] POST /api/maturity/explain -> 200 (592B) in 8.544s
+2025/12/16 23:13:34 maturity evidence collected cluster=k10p in=45.737µs
+2025/12/16 23:16:26 maturity questions done cluster=k10p in=2m52.229316347s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 23:16:26 [req:40] POST /api/maturity/questions -> 200 (16942B) in 2m52.236s
+2025/12/16 23:19:30 maturity evidence collected cluster=k10p in=1m18.045632426s
+2025/12/16 23:19:54 maturity analyze done cluster=k10p in=23.901465573s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 23:19:54 [req:41] POST /api/maturity/analyze -> 200 (45582B) in 1m41.959s
+2025/12/16 23:19:59 [req:43] POST /api/maturity/explain -> 200 (669B) in 5.091s
+2025/12/16 23:20:00 [req:44] POST /api/maturity/explain -> 200 (776B) in 6.133s
+2025/12/16 23:20:01 [req:42] POST /api/maturity/explain -> 200 (754B) in 6.896s
+2025/12/16 23:20:06 [req:47] POST /api/maturity/explain -> 200 (1201B) in 4.899s
+2025/12/16 23:20:08 [req:45] POST /api/maturity/explain -> 200 (980B) in 8.103s
+2025/12/16 23:20:09 [req:46] POST /api/maturity/explain -> 200 (942B) in 8.522s
+2025/12/16 23:20:13 [req:48] POST /api/maturity/explain -> 200 (738B) in 6.423s
+2025/12/16 23:20:14 [req:49] POST /api/maturity/explain -> 200 (771B) in 6.825s
+2025/12/16 23:20:15 [req:50] POST /api/maturity/explain -> 200 (919B) in 5.505s
+2025/12/16 23:20:18 [req:51] POST /api/maturity/explain -> 200 (722B) in 5.661s
+2025/12/16 23:20:19 [req:53] POST /api/maturity/explain -> 200 (672B) in 4.169s
+2025/12/16 23:20:22 [req:52] POST /api/maturity/explain -> 200 (805B) in 7.016s
+2025/12/16 23:20:25 [req:54] POST /api/maturity/explain -> 200 (717B) in 6.686s
+2025/12/16 23:20:27 [req:55] POST /api/maturity/explain -> 200 (608B) in 7.582s
+2025/12/16 23:20:29 [req:57] POST /api/maturity/explain -> 200 (753B) in 3.598s
+2025/12/16 23:20:29 [req:56] POST /api/maturity/explain -> 200 (665B) in 7.332s
+2025/12/16 23:20:36 [req:60] POST /api/maturity/explain -> 200 (625B) in 5.993s
+2025/12/16 23:20:36 [req:59] POST /api/maturity/explain -> 200 (783B) in 6.381s
+2025/12/16 23:20:37 [req:58] POST /api/maturity/explain -> 200 (950B) in 9.569s
+2025/12/16 23:20:41 [req:62] POST /api/maturity/explain -> 200 (732B) in 4.553s
+2025/12/16 23:20:43 [req:61] POST /api/maturity/explain -> 200 (830B) in 6.725s
+2025/12/16 23:20:46 [req:65] POST /api/maturity/explain -> 200 (365B) in 3.257s
+2025/12/16 23:20:47 [req:64] POST /api/maturity/explain -> 200 (615B) in 5.834s
+2025/12/16 23:20:47 [req:63] POST /api/maturity/explain -> 200 (912B) in 10.155s
+2025/12/16 23:21:19 [req:66] POST /api/maturity/report/pdf -> 200 (87830B) in 15.613s
+2025/12/16 23:26:52 [req:67] GET /static/style.css -> 200 (45916B) in 8ms
+2025/12/16 23:26:52 [req:68] GET / -> 200 (131346B) in 23ms
+2025/12/16 23:27:24 [req:69] GET / -> 200 (131346B) in 23ms
+2025/12/16 23:27:26 [req:70] GET /api/clusters -> 200 (19B) in 0s
+2025/12/16 23:27:26 [req:71] GET /api/namespaces -> 200 (118B) in 58ms
+2025/12/16 23:27:27 [req:72] GET /api/maturity/criteria -> 200 (21659B) in 7ms
+2025/12/16 23:27:27 [req:73] GET /favicon.ico -> 200 (131346B) in 24ms
+2025/12/16 23:27:37 [req:75] POST /api/cluster/upload -> 200 (54B) in 7ms
+2025/12/16 23:27:37 [req:76] GET /api/clusters -> 200 (28B) in 0s
+2025/12/16 23:27:37 [req:77] GET /api/namespaces -> 200 (3657B) in 253ms
+2025/12/16 23:27:41 [req:74] GET /api/maturity/evidence -> 200 (22884B) in 13.774s
+2025/12/16 23:27:42 [req:79] GET / -> 200 (131346B) in 26ms
+2025/12/16 23:27:42 [req:78] GET /api/maturity/evidence -> 200 (19442B) in 5.36s
+2025/12/16 23:27:43 [req:80] GET /api/clusters -> 200 (28B) in 0s
+2025/12/16 23:27:43 [req:81] GET /api/namespaces -> 200 (118B) in 9ms
+2025/12/16 23:27:43 [req:82] GET /api/maturity/criteria -> 200 (21659B) in 4ms
+2025/12/16 23:27:43 [req:83] GET /api/maturity/evidence -> 200 (22884B) in 13ms
+2025/12/16 23:27:43 [req:84] GET /favicon.ico -> 200 (131346B) in 55ms
+2025/12/16 23:27:45 [req:85] GET /api/namespaces -> 200 (3657B) in 87ms
+2025/12/16 23:27:45 [req:86] GET /api/maturity/criteria -> 200 (21659B) in 2ms
+2025/12/16 23:28:03 [req:87] GET /api/maturity/evidence -> 200 (39381B) in 17.87s
+2025/12/16 23:28:19 [req:88] GET /api/maturity/criteria -> 200 (21659B) in 9ms
+2025/12/16 23:28:25 [req:90] POST /api/maturity/explain -> 200 (694B) in 5.988s
+2025/12/16 23:28:26 maturity evidence collected cluster=k10p in=136.615µs
+2025/12/16 23:28:26 [req:89] POST /api/maturity/explain -> 200 (749B) in 6.817s
+2025/12/16 23:28:28 [req:91] POST /api/maturity/explain -> 200 (675B) in 8.73s
+2025/12/16 23:28:30 [req:92] POST /api/maturity/explain -> 200 (638B) in 5.053s
+2025/12/16 23:28:34 [req:94] POST /api/maturity/explain -> 200 (909B) in 8.208s
+2025/12/16 23:28:35 [req:95] POST /api/maturity/explain -> 200 (719B) in 7.024s
+2025/12/16 23:28:36 [req:96] POST /api/maturity/explain -> 200 (582B) in 6.091s
+2025/12/16 23:28:41 [req:97] POST /api/maturity/explain -> 200 (736B) in 6.684s
+2025/12/16 23:28:42 [req:98] POST /api/maturity/explain -> 200 (693B) in 6.494s
+2025/12/16 23:28:42 [req:99] POST /api/maturity/explain -> 200 (644B) in 5.67s
+2025/12/16 23:28:46 maturity analyze done cluster=k10p in=20.467684929s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 23:28:46 [req:93] POST /api/maturity/analyze -> 200 (44578B) in 20.483s
+2025/12/16 23:28:47 [req:100] POST /api/maturity/explain -> 200 (725B) in 6.491s
+2025/12/16 23:28:48 [req:102] POST /api/maturity/explain -> 200 (730B) in 5.529s
+2025/12/16 23:28:49 [req:101] POST /api/maturity/explain -> 200 (643B) in 6.813s
+2025/12/16 23:28:52 [req:104] POST /api/maturity/explain -> 200 (728B) in 4.187s
+2025/12/16 23:28:53 [req:105] POST /api/maturity/explain -> 200 (593B) in 3.819s
+2025/12/16 23:28:54 [req:103] POST /api/maturity/explain -> 200 (731B) in 6.727s
+2025/12/16 23:28:58 [req:106] POST /api/maturity/explain -> 200 (715B) in 5.244s
+2025/12/16 23:29:00 [req:107] POST /api/maturity/explain -> 200 (609B) in 7.744s
+2025/12/16 23:29:01 [req:108] POST /api/maturity/explain -> 200 (1017B) in 6.098s
+2025/12/16 23:29:03 [req:109] POST /api/maturity/explain -> 200 (567B) in 5.262s
+2025/12/16 23:29:09 [req:112] POST /api/maturity/explain -> 200 (625B) in 5.67s
+2025/12/16 23:29:09 [req:110] POST /api/maturity/explain -> 200 (688B) in 8.267s
+2025/12/16 23:29:09 [req:111] POST /api/maturity/explain -> 200 (758B) in 8.06s
+2025/12/16 23:29:15 [req:113] POST /api/maturity/explain -> 200 (777B) in 4.853s
+2025/12/16 23:29:16 [req:115] POST /api/maturity/explain -> 200 (603B) in 4.92s
+2025/12/16 23:29:18 [req:114] POST /api/maturity/explain -> 200 (909B) in 7.742s
+2025/12/16 23:29:21 [req:117] POST /api/maturity/explain -> 200 (626B) in 5.242s
+2025/12/16 23:29:23 [req:118] POST /api/maturity/explain -> 200 (759B) in 3.999s
+2025/12/16 23:29:23 [req:116] POST /api/maturity/explain -> 200 (768B) in 7.259s
+2025/12/16 23:29:26 [req:119] POST /api/maturity/explain -> 200 (718B) in 4.159s
+2025/12/16 23:29:29 [req:121] POST /api/maturity/explain -> 200 (672B) in 5.616s
+2025/12/16 23:29:32 [req:120] POST /api/maturity/explain -> 200 (814B) in 9.272s
+2025/12/16 23:29:32 [req:122] POST /api/maturity/explain -> 200 (613B) in 6.285s
+2025/12/16 23:29:36 [req:123] POST /api/maturity/explain -> 200 (777B) in 7.042s
+2025/12/16 23:29:37 [req:125] POST /api/maturity/explain -> 200 (845B) in 4.674s
+2025/12/16 23:29:38 [req:126] POST /api/maturity/explain -> 200 (336B) in 1.721s
+2025/12/16 23:29:40 [req:124] POST /api/maturity/explain -> 200 (688B) in 7.366s
+2025/12/16 23:30:12 [req:127] POST /api/maturity/report/pdf -> 200 (91523B) in 19.082s
+[2025-12-16 23:41:13] --- restart (themed pdf) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/16 23:41:16 [req:1] GET / -> 200 (123463B) in 42ms
+2025/12/16 23:41:19 [req:3] GET / -> 200 (123463B) in 44ms
+2025/12/16 23:41:21 [req:4] GET /api/clusters -> 200 (12B) in 0s
+2025/12/16 23:41:23 [req:5] GET /api/namespaces -> 200 (118B) in 9ms
+2025/12/16 23:41:23 [req:6] GET /api/maturity/criteria -> 200 (21659B) in 5ms
+2025/12/16 23:41:23 [req:8] GET /favicon.ico -> 200 (123463B) in 30ms
+2025/12/16 23:41:34 [req:2] POST /api/maturity/report/pdf -> 200 (249737B) in 17.648s
+2025/12/16 23:41:41 [req:7] GET /api/maturity/evidence -> 200 (22885B) in 18.019s
+2025/12/16 23:41:47 [req:9] POST /api/cluster/upload -> 200 (52B) in 1ms
+2025/12/16 23:41:47 [req:10] GET /api/clusters -> 200 (19B) in 0s
+2025/12/16 23:41:48 [req:11] GET /api/namespaces -> 200 (3657B) in 780ms
+2025/12/16 23:42:38 [req:12] GET /api/maturity/evidence -> 200 (39381B) in 50.134s
+2025/12/16 23:43:08 [req:13] GET /api/maturity/criteria -> 200 (21659B) in 17ms
+2025/12/16 23:43:08 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:08 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:08 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:08 [req:16] POST /api/maturity/explain -> 200 (665B) in 0s
+2025/12/16 23:43:08 [req:15] POST /api/maturity/explain -> 200 (779B) in 9ms
+2025/12/16 23:43:08 [req:14] POST /api/maturity/explain -> 200 (746B) in 14ms
+2025/12/16 23:43:09 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:09 [req:17] POST /api/maturity/explain -> 200 (663B) in 1ms
+2025/12/16 23:43:09 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:09 [req:18] POST /api/maturity/explain -> 200 (795B) in 1ms
+2025/12/16 23:43:09 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:09 [req:19] POST /api/maturity/explain -> 200 (638B) in 0s
+2025/12/16 23:43:09 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:09 [req:20] POST /api/maturity/explain -> 200 (706B) in 0s
+2025/12/16 23:43:09 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:09 [req:21] POST /api/maturity/explain -> 200 (681B) in 0s
+2025/12/16 23:43:09 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:09 [req:22] POST /api/maturity/explain -> 200 (674B) in 2ms
+2025/12/16 23:43:10 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:10 [req:23] POST /api/maturity/explain -> 200 (681B) in 0s
+2025/12/16 23:43:10 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:10 [req:24] POST /api/maturity/explain -> 200 (566B) in 0s
+2025/12/16 23:43:10 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:10 [req:25] POST /api/maturity/explain -> 200 (620B) in 1ms
+2025/12/16 23:43:10 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:10 [req:26] POST /api/maturity/explain -> 200 (654B) in 0s
+2025/12/16 23:43:10 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:10 [req:27] POST /api/maturity/explain -> 200 (714B) in 0s
+2025/12/16 23:43:10 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:10 [req:28] POST /api/maturity/explain -> 200 (625B) in 0s
+2025/12/16 23:43:11 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:11 [req:29] POST /api/maturity/explain -> 200 (674B) in 0s
+2025/12/16 23:43:11 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:11 [req:30] POST /api/maturity/explain -> 200 (624B) in 0s
+2025/12/16 23:43:11 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:11 [req:31] POST /api/maturity/explain -> 200 (688B) in 6ms
+2025/12/16 23:43:12 maturity evidence collected cluster=k10p in=31.03µs
+2025/12/16 23:43:12 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:12 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:12 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:12 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:12 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:12 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:12 LLM evaluate failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:12 maturity analyze done cluster=k10p in=3.345734ms llmProvider= llmModel=
+2025/12/16 23:43:12 [req:32] POST /api/maturity/analyze -> 200 (43349B) in 8ms
+2025/12/16 23:43:12 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:12 [req:33] POST /api/maturity/explain -> 200 (693B) in 0s
+2025/12/16 23:43:12 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:12 [req:34] POST /api/maturity/explain -> 200 (754B) in 0s
+2025/12/16 23:43:12 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:12 [req:35] POST /api/maturity/explain -> 200 (663B) in 1ms
+2025/12/16 23:43:12 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:12 [req:36] POST /api/maturity/explain -> 200 (681B) in 0s
+2025/12/16 23:43:13 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:13 [req:37] POST /api/maturity/explain -> 200 (730B) in 0s
+2025/12/16 23:43:13 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:13 [req:38] POST /api/maturity/explain -> 200 (689B) in 0s
+2025/12/16 23:43:13 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:13 [req:39] POST /api/maturity/explain -> 200 (670B) in 0s
+2025/12/16 23:43:13 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:13 [req:40] POST /api/maturity/explain -> 200 (750B) in 0s
+2025/12/16 23:43:13 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:13 [req:41] POST /api/maturity/explain -> 200 (719B) in 1ms
+2025/12/16 23:43:13 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:13 [req:42] POST /api/maturity/explain -> 200 (640B) in 0s
+2025/12/16 23:43:14 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:14 [req:43] POST /api/maturity/explain -> 200 (684B) in 0s
+2025/12/16 23:43:14 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:14 [req:44] POST /api/maturity/explain -> 200 (702B) in 1ms
+2025/12/16 23:43:14 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:14 [req:45] POST /api/maturity/explain -> 200 (578B) in 1ms
+2025/12/16 23:43:14 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:14 [req:46] POST /api/maturity/explain -> 200 (603B) in 0s
+2025/12/16 23:43:14 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:14 [req:47] POST /api/maturity/explain -> 200 (643B) in 0s
+2025/12/16 23:43:14 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:14 [req:48] POST /api/maturity/explain -> 200 (695B) in 14ms
+2025/12/16 23:43:14 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:14 [req:49] POST /api/maturity/explain -> 200 (652B) in 1ms
+2025/12/16 23:43:15 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/16 23:43:15 [req:50] POST /api/maturity/explain -> 200 (648B) in 0s
+2025/12/16 23:43:28 maturity evidence collected cluster=k10p in=30.802µs
+2025/12/16 23:43:43 maturity analyze done cluster=k10p in=14.532806961s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 23:43:43 [req:51] POST /api/maturity/analyze -> 200 (43853B) in 14.539s
+2025/12/16 23:43:47 [req:53] POST /api/maturity/explain -> 200 (817B) in 3.917s
+2025/12/16 23:43:47 [req:54] POST /api/maturity/explain -> 200 (835B) in 4.117s
+2025/12/16 23:43:52 [req:52] POST /api/maturity/explain -> 200 (758B) in 8.982s
+2025/12/16 23:43:53 [req:55] POST /api/maturity/explain -> 200 (774B) in 5.374s
+2025/12/16 23:43:54 [req:56] POST /api/maturity/explain -> 200 (741B) in 6.348s
+2025/12/16 23:44:00 [req:58] POST /api/maturity/explain -> 200 (877B) in 7.131s
+2025/12/16 23:44:02 [req:59] POST /api/maturity/explain -> 200 (884B) in 8.313s
+2025/12/16 23:44:02 [req:57] POST /api/maturity/explain -> 200 (868B) in 9.978s
+2025/12/16 23:44:07 [req:61] POST /api/maturity/explain -> 200 (685B) in 4.897s
+2025/12/16 23:44:08 [req:62] POST /api/maturity/explain -> 200 (739B) in 5.095s
+2025/12/16 23:44:10 [req:60] POST /api/maturity/explain -> 200 (935B) in 9.033s
+2025/12/16 23:44:13 [req:63] POST /api/maturity/explain -> 200 (745B) in 4.682s
+2025/12/16 23:44:13 [req:64] POST /api/maturity/explain -> 200 (525B) in 5.156s
+2025/12/16 23:44:15 [req:65] POST /api/maturity/explain -> 200 (680B) in 5.367s
+2025/12/16 23:44:18 [req:66] POST /api/maturity/explain -> 200 (740B) in 5.674s
+2025/12/16 23:44:20 [req:67] POST /api/maturity/explain -> 200 (820B) in 6.178s
+2025/12/16 23:44:22 [req:68] POST /api/maturity/explain -> 200 (648B) in 7.222s
+2025/12/16 23:44:24 [req:69] POST /api/maturity/explain -> 200 (641B) in 5.963s
+2025/12/16 23:44:29 [req:71] POST /api/maturity/explain -> 200 (745B) in 6.552s
+2025/12/16 23:44:30 [req:72] POST /api/maturity/explain -> 200 (569B) in 5.4s
+2025/12/16 23:44:35 [req:70] POST /api/maturity/explain -> 200 (784B) in 15.132s
+2025/12/16 23:44:35 [req:73] POST /api/maturity/explain -> 200 (691B) in 5.808s
+2025/12/16 23:45:31 [req:74] POST /api/maturity/report/pdf -> 200 (277722B) in 32.736s
+[2025-12-16 23:52:39] --- restart (user) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/16 23:52:51 [req:1] GET / -> 200 (123463B) in 27ms
+2025/12/16 23:53:41 [req:2] GET / -> 200 (123463B) in 27ms
+2025/12/16 23:53:46 [req:3] GET /api/clusters -> 200 (12B) in 0s
+2025/12/16 23:53:47 [req:4] GET /api/namespaces -> 200 (118B) in 30ms
+2025/12/16 23:53:47 [req:5] GET /api/maturity/criteria -> 200 (21659B) in 128ms
+2025/12/16 23:53:47 [req:6] GET /favicon.ico -> 200 (123463B) in 54ms
+2025/12/16 23:54:01 [req:7] GET /api/maturity/evidence -> 200 (22832B) in 13.524s
+2025/12/16 23:54:04 [req:8] POST /api/cluster/upload -> 200 (52B) in 7ms
+2025/12/16 23:54:04 [req:9] GET /api/clusters -> 200 (19B) in 0s
+2025/12/16 23:54:04 [req:10] GET /api/namespaces -> 200 (3657B) in 185ms
+2025/12/16 23:54:11 [req:12] GET /api/namespaces -> 200 (118B) in 18ms
+2025/12/16 23:54:11 [req:13] GET /api/maturity/criteria -> 200 (21659B) in 16ms
+2025/12/16 23:54:11 [req:14] GET /api/maturity/evidence -> 200 (22832B) in 4ms
+2025/12/16 23:54:14 [req:15] GET /api/namespaces -> 200 (3657B) in 724ms
+2025/12/16 23:54:14 [req:16] GET /api/maturity/criteria -> 200 (21659B) in 6ms
+2025/12/16 23:54:25 [req:11] GET /api/maturity/evidence -> 200 (39381B) in 21.371s
+2025/12/16 23:54:25 [req:17] GET /api/maturity/evidence -> 200 (39381B) in 11ms
+2025/12/16 23:54:41 [req:18] GET /api/maturity/criteria -> 200 (21659B) in 7ms
+2025/12/16 23:54:48 [req:21] POST /api/maturity/explain -> 200 (948B) in 6.631s
+2025/12/16 23:54:48 [req:19] POST /api/maturity/explain -> 200 (691B) in 6.922s
+2025/12/16 23:54:49 [req:20] POST /api/maturity/explain -> 200 (900B) in 8.518s
+2025/12/16 23:54:52 [req:22] POST /api/maturity/explain -> 200 (665B) in 4.782s
+2025/12/16 23:54:54 [req:23] POST /api/maturity/explain -> 200 (874B) in 5.838s
+2025/12/16 23:54:54 [req:24] POST /api/maturity/explain -> 200 (580B) in 4.709s
+2025/12/16 23:54:58 [req:26] POST /api/maturity/explain -> 200 (734B) in 4.204s
+2025/12/16 23:54:58 [req:25] POST /api/maturity/explain -> 200 (575B) in 5.651s
+2025/12/16 23:55:02 [req:27] POST /api/maturity/explain -> 200 (765B) in 8.073s
+2025/12/16 23:55:04 [req:28] POST /api/maturity/explain -> 200 (619B) in 5.574s
+2025/12/16 23:55:06 [req:29] POST /api/maturity/explain -> 200 (961B) in 8.189s
+2025/12/16 23:55:10 [req:30] POST /api/maturity/explain -> 200 (726B) in 7.438s
+2025/12/16 23:55:11 [req:31] POST /api/maturity/explain -> 200 (648B) in 7.087s
+2025/12/16 23:55:13 [req:32] POST /api/maturity/explain -> 200 (757B) in 6.476s
+2025/12/16 23:55:15 [req:33] POST /api/maturity/explain -> 200 (619B) in 5.504s
+2025/12/16 23:55:19 [req:34] POST /api/maturity/explain -> 200 (1252B) in 8.291s
+2025/12/16 23:55:19 [req:35] POST /api/maturity/explain -> 200 (768B) in 6.315s
+2025/12/16 23:55:22 [req:36] POST /api/maturity/explain -> 200 (930B) in 6.291s
+2025/12/16 23:55:48 maturity evidence collected cluster=k10p in=40.693µs
+2025/12/16 23:56:04 maturity analyze done cluster=k10p in=16.638212462s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/16 23:56:04 [req:37] POST /api/maturity/analyze -> 200 (44770B) in 16.669s
+2025/12/16 23:56:09 [req:40] POST /api/maturity/explain -> 200 (752B) in 3.369s
+2025/12/16 23:56:10 [req:38] POST /api/maturity/explain -> 200 (836B) in 5.148s
+2025/12/16 23:56:11 [req:39] POST /api/maturity/explain -> 200 (848B) in 6.169s
+2025/12/16 23:56:15 [req:42] POST /api/maturity/explain -> 200 (772B) in 4.537s
+2025/12/16 23:56:16 [req:41] POST /api/maturity/explain -> 200 (760B) in 7.663s
+2025/12/16 23:56:18 [req:43] POST /api/maturity/explain -> 200 (1025B) in 6.027s
+2025/12/16 23:56:20 [req:44] POST /api/maturity/explain -> 200 (738B) in 5.081s
+2025/12/16 23:56:21 [req:45] POST /api/maturity/explain -> 200 (784B) in 4.052s
+2025/12/16 23:56:25 [req:46] POST /api/maturity/explain -> 200 (748B) in 7.163s
+2025/12/16 23:56:26 [req:48] POST /api/maturity/explain -> 200 (758B) in 5.109s
+2025/12/16 23:56:27 [req:47] POST /api/maturity/explain -> 200 (759B) in 6.344s
+2025/12/16 23:56:31 [req:49] POST /api/maturity/explain -> 200 (717B) in 5.587s
+2025/12/16 23:56:32 [req:51] POST /api/maturity/explain -> 200 (691B) in 5.311s
+2025/12/16 23:56:33 [req:50] POST /api/maturity/explain -> 200 (707B) in 6.576s
+2025/12/16 23:56:38 [req:53] POST /api/maturity/explain -> 200 (947B) in 4.908s
+2025/12/16 23:56:38 [req:54] POST /api/maturity/explain -> 200 (950B) in 5.595s
+2025/12/16 23:56:39 [req:52] POST /api/maturity/explain -> 200 (808B) in 7.795s
+2025/12/16 23:56:43 [req:56] POST /api/maturity/explain -> 200 (609B) in 4.66s
+2025/12/16 23:56:44 [req:55] POST /api/maturity/explain -> 200 (662B) in 6.395s
+2025/12/16 23:56:47 [req:57] POST /api/maturity/explain -> 200 (666B) in 8.423s
+2025/12/16 23:56:49 [req:59] POST /api/maturity/explain -> 200 (849B) in 4.812s
+2025/12/16 23:56:50 [req:58] POST /api/maturity/explain -> 200 (869B) in 6.32s
+2025/12/16 23:56:51 [req:61] POST /api/maturity/explain -> 200 (344B) in 1.411s
+2025/12/16 23:56:53 [req:60] POST /api/maturity/explain -> 200 (634B) in 5.404s
+2025/12/16 23:57:46 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): openrouter JSON parse failed: json: cannot unmarshal string into Go struct field MaturityCriterionScore.criteriaScores.nextSteps of type []string; content="{\n  \"criteriaScores\": [\n    {\n      \"key\": \"926e4d993e8cef16\",\n      \"category\": \"4. Resource Management\",\n      \"criterion\": \"Cluster Autoscaler\",\n      \"level\": 1,\n      \"confidence\": 0.4,\n      \"rationale\": \"No explicit autoscaler configuration observed; only CRD present.\",\n      \"evidence\": [\n        \"detectedAddons.autoscalingv2:true\",\n        \"no evidence of pool definitions or scaling policies\"\n      ],\n      \"missing\": [\n        \"Küme otomatik ölçekleyicisi (Cluster Autoscaler) kurulumu yapılmıştır mı? Yapılandırılmış bir oturum (pool) tanımlı mı?\",\n        \"Otomasyon içinde hangi kaynaklar için otomatik ölçekleme yapılandırılmıştır?\"\n      ],\n      \"nextSteps\": \"Otomatik ölçeklemeyi değerlendirmek için Cluster Autoscaler kurulumunu ve pool yapılandırmalarını gözden geçirin; otomatik ölçeklemeyi etkinleştirmek için gereken adımları belgeleyin.\"\n    },\n    {\n      \"key\": \"be2882b5802b8386\",\n      \"category\": \"4. Resource Management\",\n      \"criterion\": \"Limit Config\",\n      \"level\": 1,\n      \"confidence\": 0.6,\n      \"rationale\": \"Resource limits or quota configurations not evident in collected data.\",\n      \"evidence\": [\n        \"no LimitRange or ResourceQuota resources observed\"\n      ],\n      \"missing\": [\n        \"Kube pod/container limitleri (request/limit) tanımlanmıştır mı?\",\n        \"Namespace bazlı resource quota (ResourceQuota) uygulanmıştır mı?\"\n      ],\n      \"nextSteps\": \"LimitRange ve ResourceQuota tanımlarını değerlendirerek uygun seviyeye getirmek için eksik yapıların kurulmasını sağlayın.\"\n    },\n    {\n      \"key\": \"a4207bc671112779\",\n      \"category\": \"4. Resource Management\",\n      \"criterion\": \"Namespace Strategy\",\n      \"level\": 2,\n      \"confidence\": 0.5,\n      \"rationale\": \"Many namespaces exist but naming convention not observed; likely per-team but not confirmed.\",\n      \"evidence\": [\n        \"namespaceCount:241\",\n        \"no naming pattern evident in namespace list\"\n      ]..."
+2025/12/16 23:57:47 [req:62] POST /api/maturity/report/pdf -> 200 (281912B) in 33.833s
+[2025-12-17 00:04:33] --- restart (rebuild) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/17 00:04:46 [req:1] GET / -> 200 (123463B) in 33ms
+2025/12/17 00:05:16 [req:2] GET / -> 200 (123463B) in 58ms
+2025/12/17 00:05:16 [req:3] GET /static/style.css -> 200 (44316B) in 61ms
+2025/12/17 00:05:19 [req:4] GET /api/clusters -> 200 (12B) in 0s
+2025/12/17 00:05:20 [req:5] GET /api/namespaces -> 200 (118B) in 28ms
+2025/12/17 00:05:20 [req:6] GET /api/maturity/criteria -> 200 (21659B) in 37ms
+2025/12/17 00:05:20 [req:7] GET /favicon.ico -> 200 (123463B) in 48ms
+2025/12/17 00:05:30 [req:9] POST /api/cluster/upload -> 200 (52B) in 6ms
+2025/12/17 00:05:30 [req:10] GET /api/clusters -> 200 (19B) in 0s
+2025/12/17 00:05:30 [req:11] GET /api/namespaces -> 200 (3657B) in 209ms
+2025/12/17 00:05:34 [req:8] GET /api/maturity/evidence -> 200 (22844B) in 13.266s
+2025/12/17 00:05:37 [req:13] GET /api/namespaces -> 200 (118B) in 10ms
+2025/12/17 00:05:37 [req:14] GET /api/maturity/criteria -> 200 (21659B) in 4ms
+2025/12/17 00:05:37 [req:15] GET /api/maturity/evidence -> 200 (22844B) in 8ms
+2025/12/17 00:05:39 [req:16] GET /api/namespaces -> 200 (3657B) in 59ms
+2025/12/17 00:05:39 [req:17] GET /api/maturity/criteria -> 200 (21659B) in 5ms
+2025/12/17 00:05:49 [req:12] GET /api/maturity/evidence -> 200 (39381B) in 19.237s
+2025/12/17 00:05:49 [req:18] GET /api/maturity/evidence -> 200 (39381B) in 4ms
+2025/12/17 00:05:54 [req:19] GET /api/maturity/criteria -> 200 (21659B) in 3ms
+2025/12/17 00:05:54 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:54 [req:20] POST /api/maturity/explain -> 200 (665B) in 0s
+2025/12/17 00:05:54 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:54 [req:21] POST /api/maturity/explain -> 200 (779B) in 0s
+2025/12/17 00:05:54 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:54 [req:22] POST /api/maturity/explain -> 200 (748B) in 0s
+2025/12/17 00:05:54 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:54 [req:23] POST /api/maturity/explain -> 200 (663B) in 0s
+2025/12/17 00:05:54 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:54 [req:24] POST /api/maturity/explain -> 200 (795B) in 0s
+2025/12/17 00:05:54 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:54 [req:25] POST /api/maturity/explain -> 200 (638B) in 3ms
+2025/12/17 00:05:54 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:54 [req:26] POST /api/maturity/explain -> 200 (706B) in 0s
+2025/12/17 00:05:55 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:55 [req:27] POST /api/maturity/explain -> 200 (681B) in 2ms
+2025/12/17 00:05:55 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:55 [req:28] POST /api/maturity/explain -> 200 (674B) in 2ms
+2025/12/17 00:05:55 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:55 [req:29] POST /api/maturity/explain -> 200 (681B) in 0s
+2025/12/17 00:05:55 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:55 [req:30] POST /api/maturity/explain -> 200 (566B) in 0s
+2025/12/17 00:05:55 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:55 [req:31] POST /api/maturity/explain -> 200 (620B) in 0s
+2025/12/17 00:05:55 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:55 [req:32] POST /api/maturity/explain -> 200 (654B) in 0s
+2025/12/17 00:05:55 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:55 [req:33] POST /api/maturity/explain -> 200 (714B) in 0s
+2025/12/17 00:05:55 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:55 [req:34] POST /api/maturity/explain -> 200 (625B) in 0s
+2025/12/17 00:05:55 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:55 [req:35] POST /api/maturity/explain -> 200 (672B) in 0s
+2025/12/17 00:05:55 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:55 [req:36] POST /api/maturity/explain -> 200 (623B) in 0s
+2025/12/17 00:05:55 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:05:55 [req:37] POST /api/maturity/explain -> 200 (689B) in 0s
+2025/12/17 00:06:19 [req:38] GET /api/maturity/criteria -> 200 (21659B) in 3ms
+2025/12/17 00:06:38 maturity evidence collected cluster=k10p in=97.311µs
+2025/12/17 00:06:52 maturity analyze done cluster=k10p in=13.871155658s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/17 00:06:52 [req:39] POST /api/maturity/analyze -> 200 (45894B) in 13.883s
+2025/12/17 00:06:58 [req:40] POST /api/maturity/explain -> 200 (702B) in 4.273s
+2025/12/17 00:06:58 [req:42] POST /api/maturity/explain -> 200 (812B) in 5.178s
+2025/12/17 00:07:00 [req:41] POST /api/maturity/explain -> 200 (1028B) in 7.012s
+2025/12/17 00:07:02 [req:43] POST /api/maturity/explain -> 200 (740B) in 4.198s
+2025/12/17 00:07:04 [req:44] POST /api/maturity/explain -> 200 (784B) in 5.433s
+2025/12/17 00:07:05 [req:45] POST /api/maturity/explain -> 200 (828B) in 4.096s
+2025/12/17 00:07:06 [req:46] POST /api/maturity/explain -> 200 (748B) in 4.307s
+2025/12/17 00:07:10 [req:47] POST /api/maturity/explain -> 200 (702B) in 5.838s
+2025/12/17 00:07:12 [req:49] POST /api/maturity/explain -> 200 (730B) in 5.158s
+2025/12/17 00:07:13 [req:48] POST /api/maturity/explain -> 200 (913B) in 8.098s
+2025/12/17 00:07:18 [req:51] POST /api/maturity/explain -> 200 (796B) in 6.493s
+2025/12/17 00:07:20 [req:52] POST /api/maturity/explain -> 200 (800B) in 6.939s
+2025/12/17 00:07:20 [req:50] POST /api/maturity/explain -> 200 (883B) in 10.055s
+2025/12/17 00:07:24 [req:53] POST /api/maturity/explain -> 200 (634B) in 5.688s
+2025/12/17 00:07:27 [req:55] POST /api/maturity/explain -> 200 (738B) in 5.499s
+2025/12/17 00:07:28 [req:54] POST /api/maturity/explain -> 200 (712B) in 7.15s
+2025/12/17 00:07:31 [req:56] POST /api/maturity/explain -> 200 (738B) in 6.412s
+2025/12/17 00:07:33 [req:58] POST /api/maturity/explain -> 200 (622B) in 4.857s
+2025/12/17 00:07:33 [req:57] POST /api/maturity/explain -> 200 (691B) in 5.857s
+2025/12/17 00:07:36 [req:59] POST /api/maturity/explain -> 200 (620B) in 5.02s
+2025/12/17 00:07:40 [req:61] POST /api/maturity/explain -> 200 (840B) in 7.522s
+2025/12/17 00:07:43 [req:63] POST /api/maturity/explain -> 200 (383B) in 2.174s
+2025/12/17 00:07:43 [req:62] POST /api/maturity/explain -> 200 (579B) in 6.409s
+2025/12/17 00:07:44 [req:60] POST /api/maturity/explain -> 200 (653B) in 11.789s
+2025/12/17 00:08:06 [req:64] POST /api/maturity/report/pdf -> 200 (466221B) in 16.354s
+2025/12/17 00:13:02 [req:65] GET /health -> 200 (123463B) in 18ms
+[2025-12-17 00:16:21] --- restart (rebuild) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/17 00:16:28 [req:1] GET / -> 200 (123463B) in 50ms
+2025/12/17 00:16:35 [req:2] GET / -> 200 (123463B) in 52ms
+2025/12/17 00:16:35 [req:3] GET /static/style.css -> 304 (0B) in 11ms
+2025/12/17 00:16:38 [req:4] GET /api/clusters -> 200 (12B) in 0s
+2025/12/17 00:16:38 [req:5] GET /api/namespaces -> 200 (118B) in 36ms
+2025/12/17 00:16:39 [req:6] GET /api/maturity/criteria -> 200 (21659B) in 5ms
+2025/12/17 00:16:39 [req:7] GET /favicon.ico -> 200 (123463B) in 28ms
+2025/12/17 00:16:53 [req:8] GET /api/maturity/evidence -> 200 (22838B) in 14.153s
+2025/12/17 00:17:00 [req:9] POST /api/cluster/upload -> 200 (52B) in 3ms
+2025/12/17 00:17:00 [req:10] GET /api/clusters -> 200 (19B) in 0s
+2025/12/17 00:17:01 [req:11] GET /api/namespaces -> 200 (3657B) in 174ms
+2025/12/17 00:17:03 [req:13] GET /api/namespaces -> 200 (118B) in 22ms
+2025/12/17 00:17:03 [req:14] GET /api/maturity/criteria -> 200 (21659B) in 4ms
+2025/12/17 00:17:03 [req:15] GET /api/maturity/evidence -> 200 (22838B) in 8ms
+2025/12/17 00:17:05 [req:16] GET /api/namespaces -> 200 (3657B) in 54ms
+2025/12/17 00:17:05 [req:17] GET /api/maturity/criteria -> 200 (21657B) in 2ms
+2025/12/17 00:17:18 [req:12] GET /api/maturity/evidence -> 200 (39380B) in 17.829s
+2025/12/17 00:17:18 [req:18] GET /api/maturity/evidence -> 200 (39380B) in 6ms
+2025/12/17 00:17:29 [req:19] GET /api/maturity/criteria -> 200 (21659B) in 5ms
+2025/12/17 00:17:35 [req:21] POST /api/maturity/explain -> 200 (855B) in 5.337s
+2025/12/17 00:17:37 [req:20] POST /api/maturity/explain -> 200 (895B) in 7.153s
+2025/12/17 00:17:37 [req:22] POST /api/maturity/explain -> 200 (718B) in 7.327s
+2025/12/17 00:17:41 [req:23] POST /api/maturity/explain -> 200 (704B) in 6.361s
+2025/12/17 00:17:42 [req:25] POST /api/maturity/explain -> 200 (663B) in 4.675s
+2025/12/17 00:17:42 [req:24] POST /api/maturity/explain -> 200 (785B) in 5.558s
+2025/12/17 00:17:47 [req:26] POST /api/maturity/explain -> 200 (748B) in 5.534s
+2025/12/17 00:17:48 [req:28] POST /api/maturity/explain -> 200 (639B) in 5.452s
+2025/12/17 00:17:49 [req:27] POST /api/maturity/explain -> 200 (704B) in 7.632s
+2025/12/17 00:17:53 [req:29] POST /api/maturity/explain -> 200 (655B) in 5.726s
+2025/12/17 00:17:54 [req:31] POST /api/maturity/explain -> 200 (684B) in 5.001s
+2025/12/17 00:17:56 [req:30] POST /api/maturity/explain -> 200 (734B) in 7.836s
+2025/12/17 00:17:59 [req:33] POST /api/maturity/explain -> 200 (780B) in 4.195s
+2025/12/17 00:17:59 [req:32] POST /api/maturity/explain -> 200 (681B) in 6.859s
+2025/12/17 00:18:01 [req:34] POST /api/maturity/explain -> 200 (611B) in 5.514s
+2025/12/17 00:18:05 [req:35] POST /api/maturity/explain -> 200 (935B) in 6.41s
+2025/12/17 00:18:08 [req:37] POST /api/maturity/explain -> 200 (733B) in 7.196s
+2025/12/17 00:18:09 [req:36] POST /api/maturity/explain -> 200 (730B) in 9.05s
+2025/12/17 00:18:41 maturity evidence collected cluster=k10p in=76.543µs
+2025/12/17 00:18:57 maturity analyze done cluster=k10p in=16.756672155s llmProvider=openrouter llmModel=nvidia/nemotron-3-nano-30b-a3b:free
+2025/12/17 00:18:57 [req:38] POST /api/maturity/analyze -> 200 (45365B) in 16.761s
+2025/12/17 00:19:02 [req:40] POST /api/maturity/explain -> 200 (826B) in 3.919s
+2025/12/17 00:19:05 [req:39] POST /api/maturity/explain -> 200 (872B) in 6.465s
+2025/12/17 00:19:05 [req:41] POST /api/maturity/explain -> 200 (821B) in 6.651s
+2025/12/17 00:19:08 [req:42] POST /api/maturity/explain -> 200 (663B) in 5.88s
+2025/12/17 00:19:11 [req:44] POST /api/maturity/explain -> 200 (904B) in 5.629s
+2025/12/17 00:19:13 [req:43] POST /api/maturity/explain -> 200 (800B) in 7.698s
+2025/12/17 00:19:13 [req:45] POST /api/maturity/explain -> 200 (857B) in 5.056s
+2025/12/17 00:19:18 [req:46] POST /api/maturity/explain -> 200 (706B) in 6.869s
+2025/12/17 00:19:20 [req:48] POST /api/maturity/explain -> 200 (779B) in 6.176s
+2025/12/17 00:19:22 [req:49] POST /api/maturity/explain -> 200 (740B) in 4.385s
+2025/12/17 00:19:25 [req:50] POST /api/maturity/explain -> 200 (589B) in 4.859s
+2025/12/17 00:19:27 [req:51] POST /api/maturity/explain -> 200 (601B) in 5.039s
+2025/12/17 00:19:31 [req:47] POST /api/maturity/explain -> 200 (810B) in 17.974s
+2025/12/17 00:19:31 [req:52] POST /api/maturity/explain -> 200 (826B) in 6.066s
+2025/12/17 00:19:34 [req:53] POST /api/maturity/explain -> 200 (579B) in 6.376s
+2025/12/17 00:19:36 [req:55] POST /api/maturity/explain -> 200 (779B) in 5.572s
+2025/12/17 00:19:38 [req:54] POST /api/maturity/explain -> 200 (771B) in 7.281s
+2025/12/17 00:19:42 [req:57] POST /api/maturity/explain -> 200 (620B) in 4.953s
+2025/12/17 00:19:42 [req:56] POST /api/maturity/explain -> 200 (692B) in 7.865s
+2025/12/17 00:19:43 [req:58] POST /api/maturity/explain -> 200 (656B) in 4.647s
+2025/12/17 00:19:49 [req:61] POST /api/maturity/explain -> 200 (801B) in 5.522s
+2025/12/17 00:19:49 [req:60] POST /api/maturity/explain -> 200 (754B) in 6.808s
+2025/12/17 00:19:50 [req:59] POST /api/maturity/explain -> 200 (933B) in 8.038s
+2025/12/17 00:19:51 [req:62] POST /api/maturity/explain -> 200 (395B) in 2.373s
+2025/12/17 00:20:21 [req:63] POST /api/maturity/report/pdf -> 200 (244224B) in 20.674s
+2025/12/17 00:27:09 maturity evidence collected cluster=default in=13.926904611s
+2025/12/17 00:27:09 maturity analyze done cluster=default in=1.8806ms llmProvider= llmModel=
+2025/12/17 00:27:09 [req:64] POST /api/maturity/analyze -> 200 (99209B) in 13.935s
+[2025-12-17 00:28:32] --- restart (rebuild) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/17 00:28:34 [req:1] GET / -> 200 (123463B) in 17ms
+2025/12/17 00:29:08 [req:2] GET / -> 200 (123463B) in 28ms
+2025/12/17 00:29:09 [req:3] GET /static/style.css -> 304 (0B) in 0s
+2025/12/17 00:29:10 [req:4] GET /api/clusters -> 200 (12B) in 0s
+2025/12/17 00:29:11 [req:5] GET /api/namespaces -> 200 (118B) in 98ms
+2025/12/17 00:29:11 [req:6] GET /favicon.ico -> 200 (123463B) in 41ms
+2025/12/17 00:29:11 [req:7] GET /api/maturity/criteria -> 200 (21659B) in 6ms
+2025/12/17 00:29:22 [req:9] POST /api/cluster/upload -> 200 (52B) in 4ms
+2025/12/17 00:29:22 [req:10] GET /api/clusters -> 200 (19B) in 0s
+2025/12/17 00:29:23 [req:11] GET /api/namespaces -> 200 (3657B) in 309ms
+2025/12/17 00:29:25 [req:8] GET /api/maturity/evidence -> 200 (22881B) in 13.568s
+2025/12/17 00:29:27 [req:13] GET /api/namespaces -> 200 (118B) in 14ms
+2025/12/17 00:29:27 [req:14] GET /api/maturity/criteria -> 200 (21659B) in 11ms
+2025/12/17 00:29:27 [req:15] GET /api/maturity/evidence -> 200 (22881B) in 6ms
+2025/12/17 00:29:29 [req:16] GET /api/namespaces -> 200 (3657B) in 67ms
+2025/12/17 00:29:29 [req:17] GET /api/maturity/criteria -> 200 (21659B) in 3ms
+2025/12/17 00:29:41 [req:12] GET /api/maturity/evidence -> 200 (39381B) in 18.038s
+2025/12/17 00:29:41 [req:18] GET /api/maturity/evidence -> 200 (39381B) in 6ms
+2025/12/17 00:29:47 [req:19] GET /api/maturity/criteria -> 200 (21659B) in 4ms
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:20] POST /api/maturity/explain -> 200 (665B) in 1ms
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:21] POST /api/maturity/explain -> 200 (779B) in 3ms
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:22] POST /api/maturity/explain -> 200 (747B) in 1ms
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:23] POST /api/maturity/explain -> 200 (663B) in 0s
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:24] POST /api/maturity/explain -> 200 (795B) in 0s
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:25] POST /api/maturity/explain -> 200 (638B) in 0s
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:26] POST /api/maturity/explain -> 200 (706B) in 0s
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:27] POST /api/maturity/explain -> 200 (681B) in 0s
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:28] POST /api/maturity/explain -> 200 (674B) in 0s
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:29] POST /api/maturity/explain -> 200 (681B) in 0s
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:30] POST /api/maturity/explain -> 200 (566B) in 0s
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:31] POST /api/maturity/explain -> 200 (620B) in 1ms
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:32] POST /api/maturity/explain -> 200 (653B) in 1ms
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:33] POST /api/maturity/explain -> 200 (714B) in 0s
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:34] POST /api/maturity/explain -> 200 (625B) in 1ms
+2025/12/17 00:29:48 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:48 [req:35] POST /api/maturity/explain -> 200 (674B) in 0s
+2025/12/17 00:29:49 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:49 [req:36] POST /api/maturity/explain -> 200 (624B) in 0s
+2025/12/17 00:29:49 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:49 [req:37] POST /api/maturity/explain -> 200 (689B) in 0s
+2025/12/17 00:29:49 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:49 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:49 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:49 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:49 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:49 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:49 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:49 LLM evaluate failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:29:49 [req:38] POST /api/maturity/report/pdf -> 200 (228460B) in 77ms
+2025/12/17 00:41:12 [req:39] POST /api/maturity/report/pdf -> 200 (172361B) in 15.176s
+[2025-12-17 00:43:33] --- restart (pdf redesign) ---
+Connected to Kubernetes cluster 'default'
+Starting web server on http://localhost:8080
+2025/12/17 00:43:35 [req:1] GET / -> 200 (123463B) in 17ms
+2025/12/17 00:43:57 [req:3] GET / -> 200 (123463B) in 35ms
+2025/12/17 00:43:57 [req:4] GET /static/style.css -> 304 (0B) in 0s
+2025/12/17 00:44:00 [req:2] POST /api/maturity/report/pdf -> 200 (130237B) in 16.497s
+2025/12/17 00:44:02 [req:5] GET /api/clusters -> 200 (12B) in 0s
+2025/12/17 00:44:02 [req:6] GET /api/namespaces -> 200 (118B) in 14ms
+2025/12/17 00:44:03 [req:7] GET /api/maturity/criteria -> 200 (21659B) in 45ms
+2025/12/17 00:44:03 [req:8] GET /favicon.ico -> 200 (123463B) in 65ms
+2025/12/17 00:44:03 [req:9] GET /api/maturity/evidence -> 200 (22889B) in 5ms
+2025/12/17 00:44:16 [req:10] POST /api/cluster/upload -> 200 (52B) in 6ms
+2025/12/17 00:44:16 [req:11] GET /api/clusters -> 200 (19B) in 0s
+2025/12/17 00:44:16 [req:12] GET /api/namespaces -> 200 (3657B) in 200ms
+2025/12/17 00:44:19 [req:14] GET /api/namespaces -> 200 (118B) in 12ms
+2025/12/17 00:44:19 [req:15] GET /api/maturity/criteria -> 200 (21658B) in 7ms
+2025/12/17 00:44:19 [req:16] GET /api/maturity/evidence -> 200 (22889B) in 4ms
+2025/12/17 00:44:21 [req:17] GET /api/namespaces -> 200 (3657B) in 60ms
+2025/12/17 00:44:21 [req:18] GET /api/maturity/criteria -> 200 (21659B) in 4ms
+2025/12/17 00:44:41 [req:13] GET /api/maturity/evidence -> 200 (39381B) in 24.376s
+2025/12/17 00:44:41 [req:19] GET /api/maturity/evidence -> 200 (39381B) in 24ms
+2025/12/17 00:44:45 [req:20] GET /api/maturity/criteria -> 200 (21659B) in 4ms
+2025/12/17 00:44:46 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:46 [req:22] POST /api/maturity/explain -> 200 (664B) in 1ms
+2025/12/17 00:44:46 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:46 [req:23] POST /api/maturity/explain -> 200 (779B) in 1ms
+2025/12/17 00:44:46 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:46 [req:21] POST /api/maturity/explain -> 200 (748B) in 1ms
+2025/12/17 00:44:46 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:46 [req:24] POST /api/maturity/explain -> 200 (663B) in 0s
+2025/12/17 00:44:46 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:46 [req:25] POST /api/maturity/explain -> 200 (795B) in 0s
+2025/12/17 00:44:46 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:46 [req:26] POST /api/maturity/explain -> 200 (638B) in 0s
+2025/12/17 00:44:46 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:46 [req:27] POST /api/maturity/explain -> 200 (706B) in 0s
+2025/12/17 00:44:46 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:46 [req:28] POST /api/maturity/explain -> 200 (681B) in 2ms
+2025/12/17 00:44:46 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:46 [req:29] POST /api/maturity/explain -> 200 (674B) in 0s
+2025/12/17 00:44:46 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:46 [req:30] POST /api/maturity/explain -> 200 (681B) in 1ms
+2025/12/17 00:44:47 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:47 [req:31] POST /api/maturity/explain -> 200 (566B) in 1ms
+2025/12/17 00:44:47 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:47 [req:32] POST /api/maturity/explain -> 200 (620B) in 0s
+2025/12/17 00:44:47 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:47 [req:33] POST /api/maturity/explain -> 200 (654B) in 1ms
+2025/12/17 00:44:47 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:47 [req:34] POST /api/maturity/explain -> 200 (714B) in 0s
+2025/12/17 00:44:47 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:47 [req:35] POST /api/maturity/explain -> 200 (625B) in 0s
+2025/12/17 00:44:47 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:47 [req:36] POST /api/maturity/explain -> 200 (674B) in 0s
+2025/12/17 00:44:47 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:47 [req:37] POST /api/maturity/explain -> 200 (624B) in 0s
+2025/12/17 00:44:47 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:47 [req:38] POST /api/maturity/explain -> 200 (689B) in 0s
+2025/12/17 00:44:48 maturity evidence collected cluster=k10p in=32.452µs
+2025/12/17 00:44:48 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:48 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:48 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:48 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:48 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:48 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:48 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:48 LLM evaluate failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:48 maturity analyze done cluster=k10p in=3.793734ms llmProvider= llmModel=
+2025/12/17 00:44:48 [req:39] POST /api/maturity/analyze -> 200 (43476B) in 7ms
+2025/12/17 00:44:49 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:49 [req:40] POST /api/maturity/explain -> 200 (693B) in 0s
+2025/12/17 00:44:49 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:49 [req:41] POST /api/maturity/explain -> 200 (754B) in 0s
+2025/12/17 00:44:49 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:49 [req:42] POST /api/maturity/explain -> 200 (663B) in 0s
+2025/12/17 00:44:49 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:49 [req:43] POST /api/maturity/explain -> 200 (681B) in 0s
+2025/12/17 00:44:49 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:49 [req:44] POST /api/maturity/explain -> 200 (730B) in 0s
+2025/12/17 00:44:49 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:49 [req:45] POST /api/maturity/explain -> 200 (648B) in 2ms
+2025/12/17 00:44:49 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:49 [req:46] POST /api/maturity/explain -> 200 (657B) in 3ms
+2025/12/17 00:44:49 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:49 [req:47] POST /api/maturity/explain -> 200 (668B) in 0s
+2025/12/17 00:44:49 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:49 [req:48] POST /api/maturity/explain -> 200 (721B) in 0s
+2025/12/17 00:44:50 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:50 [req:49] POST /api/maturity/explain -> 200 (736B) in 1ms
+2025/12/17 00:44:50 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:50 [req:50] POST /api/maturity/explain -> 200 (617B) in 0s
+2025/12/17 00:44:50 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:50 [req:51] POST /api/maturity/explain -> 200 (652B) in 2ms
+2025/12/17 00:44:51 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:51 [req:52] POST /api/maturity/explain -> 200 (686B) in 0s
+2025/12/17 00:44:51 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:51 [req:53] POST /api/maturity/explain -> 200 (598B) in 0s
+2025/12/17 00:44:51 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:51 [req:54] POST /api/maturity/explain -> 200 (601B) in 0s
+2025/12/17 00:44:52 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:52 [req:55] POST /api/maturity/explain -> 200 (609B) in 1ms
+2025/12/17 00:44:52 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:52 [req:56] POST /api/maturity/explain -> 200 (660B) in 0s
+2025/12/17 00:44:52 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:52 [req:57] POST /api/maturity/explain -> 200 (713B) in 0s
+2025/12/17 00:44:53 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:53 [req:58] POST /api/maturity/explain -> 200 (622B) in 0s
+2025/12/17 00:44:53 LLM explain failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:53 [req:59] POST /api/maturity/explain -> 200 (442B) in 0s
+2025/12/17 00:44:57 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:57 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:57 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:57 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:57 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:57 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:57 LLM batch failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:57 LLM evaluate failed (provider=openrouter model=nvidia/nemotron-3-nano-30b-a3b:free): OpenRouter not configured (set OPENROUTER_API_KEY)
+2025/12/17 00:44:57 [req:60] POST /api/maturity/report/pdf -> 200 (185262B) in 75ms

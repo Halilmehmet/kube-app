@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"os"
 	"sort"
@@ -71,6 +72,18 @@ func EvaluateMaturity(ctx context.Context, doc MaturityCriteriaDoc, ev MaturityE
 		err     error
 	)
 
+	// UI stores wizard choices as "L3 — note..." in answers; treat as overrides to avoid extra LLM work.
+	if ov := overridesFromAnswers(req.Answers); len(ov) > 0 {
+		if req.Overrides == nil {
+			req.Overrides = map[string]int{}
+		}
+		for k, v := range ov {
+			if _, exists := req.Overrides[k]; !exists {
+				req.Overrides[k] = v
+			}
+		}
+	}
+
 	cfg := normalizeLLMConfig(req.LLM)
 	if cfg.Provider == "" {
 		cfg.Provider = strings.ToLower(strings.TrimSpace(os.Getenv("LLM_PROVIDER")))
@@ -80,23 +93,30 @@ func EvaluateMaturity(ctx context.Context, doc MaturityCriteriaDoc, ev MaturityE
 	case "":
 		// Auto-select
 		if strings.TrimSpace(cfg.APIKey) != "" {
-			// If UI provided a key but not provider, default to Gemini (as requested) unless model hints OpenAI.
-			if strings.Contains(strings.ToLower(cfg.Model), "gpt") || strings.Contains(strings.ToLower(cfg.Model), "openai") {
-				report, llmMeta, err = evaluateMaturityWithOpenAI(ctx, flattened, ev, req, cfg)
+			// If UI provided a key but not provider, default to Gemini unless model hints OpenAI/OpenRouter.
+			// OpenRouter models are often "provider/model".
+			if strings.Contains(cfg.Model, "/") {
+				report, llmMeta, err = evaluateMaturityBatched(ctx, "openrouter", flattened, ev, req, cfg)
+			} else if strings.Contains(strings.ToLower(cfg.Model), "gpt") || strings.Contains(strings.ToLower(cfg.Model), "openai") {
+				report, llmMeta, err = evaluateMaturityBatched(ctx, "openai", flattened, ev, req, cfg)
 			} else {
-				report, llmMeta, err = evaluateMaturityWithGemini(ctx, flattened, ev, req, cfg)
+				report, llmMeta, err = evaluateMaturityBatched(ctx, "gemini", flattened, ev, req, cfg)
 			}
 		} else if strings.TrimSpace(os.Getenv("OPENAI_API_KEY")) != "" {
-			report, llmMeta, err = evaluateMaturityWithOpenAI(ctx, flattened, ev, req, cfg)
+			report, llmMeta, err = evaluateMaturityBatched(ctx, "openai", flattened, ev, req, cfg)
+		} else if strings.TrimSpace(os.Getenv("OPENROUTER_API_KEY")) != "" {
+			report, llmMeta, err = evaluateMaturityBatched(ctx, "openrouter", flattened, ev, req, cfg)
 		} else if strings.TrimSpace(os.Getenv("GEMINI_API_KEY")) != "" {
-			report, llmMeta, err = evaluateMaturityWithGemini(ctx, flattened, ev, req, cfg)
+			report, llmMeta, err = evaluateMaturityBatched(ctx, "gemini", flattened, ev, req, cfg)
 		} else {
 			report = evaluateMaturityWithoutLLM(flattened, ev, req, "LLM not configured (set OPENAI_API_KEY or GEMINI_API_KEY)")
 		}
 	case "openai":
-		report, llmMeta, err = evaluateMaturityWithOpenAI(ctx, flattened, ev, req, cfg)
+		report, llmMeta, err = evaluateMaturityBatched(ctx, "openai", flattened, ev, req, cfg)
+	case "openrouter":
+		report, llmMeta, err = evaluateMaturityBatched(ctx, "openrouter", flattened, ev, req, cfg)
 	case "gemini":
-		report, llmMeta, err = evaluateMaturityWithGemini(ctx, flattened, ev, req, cfg)
+		report, llmMeta, err = evaluateMaturityBatched(ctx, "gemini", flattened, ev, req, cfg)
 	case "none", "off", "disabled":
 		report = evaluateMaturityWithoutLLM(flattened, ev, req, "LLM disabled (LLM_PROVIDER)")
 	default:
@@ -104,7 +124,18 @@ func EvaluateMaturity(ctx context.Context, doc MaturityCriteriaDoc, ev MaturityE
 	}
 
 	if err != nil {
-		// Fall back to non-LLM report, but keep the error visible to the user.
+		// If we have a usable report (inferred baseline), prefer returning it with a note.
+		log.Printf("LLM evaluate failed (provider=%s model=%s): %v", cfg.Provider, cfg.Model, err)
+		if len(report.CriteriaScores) > 0 {
+			if strings.TrimSpace(report.Notes) == "" {
+				report.Notes = "LLM error: " + err.Error()
+			} else {
+				report.Notes = strings.TrimSpace(report.Notes) + " | LLM error: " + err.Error()
+			}
+			applyOverrides(&report, req.Overrides)
+			recomputeAggregates(&report)
+			return report, llmMeta, nil
+		}
 		report = evaluateMaturityWithoutLLM(flattened, ev, req, err.Error())
 		return report, llmMeta, nil
 	}
@@ -112,6 +143,34 @@ func EvaluateMaturity(ctx context.Context, doc MaturityCriteriaDoc, ev MaturityE
 	applyOverrides(&report, req.Overrides)
 	recomputeAggregates(&report)
 	return report, llmMeta, nil
+}
+
+func overridesFromAnswers(answers map[string]string) map[string]int {
+	if len(answers) == 0 {
+		return nil
+	}
+	out := map[string]int{}
+	for k, v := range answers {
+		k = strings.TrimSpace(k)
+		if k == "" {
+			continue
+		}
+		v = strings.TrimSpace(v)
+		if len(v) < 2 {
+			continue
+		}
+		if v[0] != 'L' && v[0] != 'l' {
+			continue
+		}
+		if v[1] < '1' || v[1] > '5' {
+			continue
+		}
+		out[k] = int(v[1] - '0')
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 func normalizeLLMConfig(cfg *LLMRequestConfig) LLMRequestConfig {
@@ -185,10 +244,15 @@ func evaluateMaturityWithoutLLM(criteria []MaturityCriterion, ev MaturityEvidenc
 
 func defaultMissingQuestions(c MaturityCriterion) []string {
 	var out []string
-	out = append(out, "Bu kriter için mevcut durum hangi seviye? (L1–L5 seçin veya kısaca açıklayın)")
-	out = append(out, "Kanıt var mı? (ör. ilgili YAML, `kubectl get ... -o yaml` çıktısı, dashboard ekran görüntüsü, runbook/ADR linki)")
+	out = append(out, "İstenen: L1–L5 seviyesini seçin ve 1-2 cümleyle nedenini yazın.")
+	out = append(out, "Kanıt: en az 1 adet ekleyin (YAML snippet/link, `kubectl ... -o yaml` çıktısı, dashboard ekran görüntüsü, runbook/ADR linki).")
 	if display := strings.TrimSpace(c.Name); display != "" {
-		out = append(out, fmt.Sprintf("%s kriteri için hangi komut/rapor/YAML kanıt olabilir? (örn. `%s`)", display, strings.Join(suggestKubectlCommandsForCriterion(display), "` / `")))
+		cmds := strings.Join(suggestKubectlCommandsForCriterion(display), "` / `")
+		if strings.TrimSpace(cmds) != "" {
+			out = append(out, fmt.Sprintf("Kontrol: %s kriterini doğrulamak için şu komutlardan birinin çıktısını ekleyin (örn. `%s`).", display, cmds))
+		} else {
+			out = append(out, fmt.Sprintf("Kontrol: %s kriterini doğrulamak için ilgili YAML/rapor çıktısını ekleyin.", display))
+		}
 	}
 	if len(c.Levels) == 5 {
 		var opts []string
@@ -200,7 +264,7 @@ func defaultMissingQuestions(c MaturityCriterion) []string {
 			opts = append(opts, fmt.Sprintf("L%d=%s", i+1, truncateForQuestion(v, 70)))
 		}
 		if len(opts) > 0 {
-			out = append(out, "Seviye seçenekleri (özet): "+strings.Join(opts, " | "))
+			out = append(out, "Seviye tanımları (özet): "+strings.Join(opts, " | "))
 		}
 	}
 	return out
@@ -393,30 +457,6 @@ func GeneratePrecheckQuestions(ctx context.Context, doc MaturityCriteriaDoc, ev 
 	// Always use quick choices for speed.
 	choices := []string{"L1", "L2", "L3", "L4", "L5", "Bilmiyorum"}
 
-	promptObj := map[string]any{
-		"cluster":     ev.Cluster,
-		"userNotes":   strings.TrimSpace(req.UserNotes),
-		"userAnswers": req.Answers,
-		"evidence": map[string]any{
-			"kubernetesVersion": ev.KubernetesVersion,
-			"nodeCount":         ev.NodeCount,
-			"zones":             ev.Zones,
-			"detectedAddons":    ev.DetectedAddons,
-			"permissions":       ev.Permissions,
-		},
-		"candidates": candidates,
-		"choices":    choices,
-		"rules": []string{
-			"Türkçe, çok net ve spesifik sorular yaz.",
-			"Soru tek başına okununca anlaşılmalı (rubriği okumadan).",
-			"Genel soru sorma: ölçülebilir/kanıta dayalı bilgi iste (sayı, yapı, süreç, policy adı, tool adı vb.).",
-			"Karar vermek için sadece gerekli bilgiyi sor (L1-L5 seçimini netleştirsin).",
-			"Her soru için 2-4 kısa ipucu ekle: nereden bakılır + örnek kubectl komutu + kanıt örneği.",
-			"İpuçlarına mümkünse seviye özetini ekle (L1..L5 kısa).",
-			"1-2 cümle soru; ipuçları kısa maddeler gibi olabilir.",
-		},
-	}
-
 	system := `You generate a short, clear questionnaire for a Kubernetes maturity assessment.
 	You receive rubric criteria + precheck results (level/confidence/rationale) and cluster evidence summary.
 	Return ONLY valid JSON (no markdown) with:
@@ -426,27 +466,19 @@ func GeneratePrecheckQuestions(ctx context.Context, doc MaturityCriteriaDoc, ev 
 	- Make each question specific to the criterion.
 	- Question must be readable and self-contained (no shorthand).
 	- Avoid generic “Hangi seviye?” questions; ask for concrete facts/evidence that decide L1-L5.
-	- Provide 2-4 hints to help the user answer quickly (where to look + kubectl commands + example evidence).
+	- Provide 2-4 hints to help the user answer quickly; each hint must explicitly state what is required (use prefixes like "İstenen:" / "Kanıt:" when possible), plus where to look + kubectl commands + example evidence.
 	- Include a short level summary hint when possible.
 	- Use the provided choices exactly.
 	- priority: 1..N (1 is highest).`
 
-	user := "INPUT_JSON=" + mustJSON(promptObj)
-
 	switch cfg.Provider {
 	case "openai":
-		out, meta, err := generateQuestionsWithOpenAI(ctx, system, user, cfg)
-		if err == nil && len(out) > 0 {
-			return normalizePrecheckQuestions(out, candidates, choices), meta, ""
-		}
-		return fallbackQuestions(candidates, choices), meta, errString(err)
+		return generatePrecheckQuestionsBatched(ctx, "openai", system, "", candidates, choices, req, cfg, ev)
+	case "openrouter":
+		return generatePrecheckQuestionsBatched(ctx, "openrouter", system, "", candidates, choices, req, cfg, ev)
 	case "gemini", "":
-		out, meta, err := generateQuestionsWithGemini(ctx, system, user, cfg)
-		if err == nil && len(out) > 0 {
-			return normalizePrecheckQuestions(out, candidates, choices), meta, ""
-		}
-		// If provider unspecified, silently fall back to heuristic questions.
-		return fallbackQuestions(candidates, choices), meta, errString(err)
+		// If provider unspecified, we try gemini first, then fall back.
+		return generatePrecheckQuestionsBatched(ctx, "gemini", system, "", candidates, choices, req, cfg, ev)
 	case "none", "off", "disabled":
 		return fallbackQuestions(candidates, choices), nil, "LLM disabled"
 	default:
@@ -556,8 +588,13 @@ func normalizePrecheckQuestions(in []MaturityQuestion, candidates []questionCand
 			}
 		}
 
+		// Ensure the user knows exactly what is being asked.
+		if !containsAnyHint(hints, "istenen:") {
+			hints = append(hints, "İstenen: L1–L5 seçimi + 1-2 cümle gerekçe; en az 1 kanıt (YAML/komut çıktısı/link).")
+		}
+
 		if len(hints) < 2 {
-			hints = append(hints, "İpucu: kanıt olarak YAML/komut çıktısı/link ekleyin.")
+			hints = append(hints, "Kanıt: YAML/komut çıktısı/link ekleyin (en az 1).")
 		}
 		if len(hints) > 6 {
 			hints = hints[:6]
@@ -611,7 +648,7 @@ func fallbackQuestions(candidates []questionCandidate, choices []string) []Matur
 				hints = append(hints, fmt.Sprintf("Ön tespit: L%d%s", c.Inferred.Level, conf))
 			}
 		}
-		hints = append(hints, "İpucu: seçimden sonra 1-2 satır kanıt ekleyin (YAML/komut çıktısı/link).")
+		hints = append(hints, "İstenen: L1–L5 seçimi + 1-2 cümle gerekçe; en az 1 kanıt (YAML/komut çıktısı/link).")
 		if len(cmds) > 0 {
 			hints = append(hints, "Örnek komut: "+cmds[0])
 		}
@@ -638,7 +675,7 @@ func fallbackQuestions(candidates []questionCandidate, choices []string) []Matur
 			Key:       c.Criterion.Key,
 			Category:  c.Criterion.Category,
 			Criterion: c.Criterion.Name,
-			Question:  fmt.Sprintf("%s için, aşağıdaki seviye tanımlarından hangisi sizin ortamınızı en iyi anlatıyor? (L1–L5 seçin)", c.Criterion.Name),
+			Question:  fmt.Sprintf("%s için hangi seviye (L1–L5) geçerli? Seçiminizi 1-2 cümle gerekçe ve en az 1 kanıtla destekleyin.", c.Criterion.Name),
 			Choices:   choices,
 			Hints:     hints,
 			Priority:  i + 1,

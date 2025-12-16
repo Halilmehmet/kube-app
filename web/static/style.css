@@ -608,6 +608,55 @@ body {
     line-height: 1.35;
 }
 
+/* Global loading overlay (cluster switch / upload) */
+.global-loading.hidden {
+    display: none;
+}
+
+.global-loading {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(2, 6, 23, 0.62);
+    backdrop-filter: blur(2px);
+}
+
+.global-loading-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.94);
+    color: #e2e8f0;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+}
+
+.global-loading-text {
+    font-size: 13px;
+    line-height: 1.35;
+    max-width: 52ch;
+}
+
+.global-spinner {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(226, 232, 240, 0.22);
+    border-top-color: rgba(226, 232, 240, 0.92);
+    animation: global-spin 0.9s linear infinite;
+}
+
+@keyframes global-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .maturity-status {
     border: 1px dashed rgba(148, 163, 184, 0.22);
     border-radius: 14px;

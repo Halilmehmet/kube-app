@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -2099,6 +2101,9 @@ func collectKubectlEvidence(ctx context.Context, conn *ClusterConnection, ev *Ma
 	if _, err := exec.LookPath("kubectl"); err != nil {
 		return
 	}
+	if ev.Kubectl == nil {
+		ev.Kubectl = map[string]string{}
+	}
 
 	tmp, err := os.CreateTemp("", "kube-app-kubeconfig-*.yaml")
 	if err != nil {
@@ -2133,6 +2138,16 @@ func collectKubectlEvidence(ctx context.Context, conn *ClusterConnection, ev *Ma
 		labelPrefix += " --context " + conn.Context
 	}
 
+	var mu sync.Mutex
+	store := func(key, val string) {
+		mu.Lock()
+		ev.Kubectl[key] = val
+		mu.Unlock()
+	}
+	storeNote := func(val string) {
+		store("kubectl NOTE", val)
+	}
+
 	buildKubectlArgs := func(insecure bool, args ...string) []string {
 		cmdArgs := []string{"--kubeconfig", tmp.Name()}
 		cmdArgs = append(cmdArgs, args...)
@@ -2145,118 +2160,211 @@ func collectKubectlEvidence(ctx context.Context, conn *ClusterConnection, ev *Ma
 		return cmdArgs
 	}
 
-	runCapture := func(insecure bool, args ...string) (string, string, error) {
+	execKubectl := func(insecure bool, args ...string) (raw string, key string, text string, err error) {
 		cmdArgs := buildKubectlArgs(insecure, args...)
 		cmd := exec.CommandContext(ctx, "kubectl", cmdArgs...)
 		out, err := cmd.CombinedOutput()
-		text := truncateForKubectl(string(out), 1200)
-		key := strings.TrimSpace(labelPrefix + " " + strings.Join(args, " "))
+		raw = string(out)
+		text = truncateForKubectl(raw, 1200)
+		key = strings.TrimSpace(labelPrefix + " " + strings.Join(args, " "))
 		if err != nil {
 			// Treat missing CRDs as expected (not an "error" for evidence collection).
-			if isKubectlMissingResourceType(string(out)) {
-				ev.Kubectl[key] = strings.TrimSpace(text + "\nNOTE: resource type not found (CRD not installed).")
-				return "", key, nil
+			if isKubectlMissingResourceType(raw) {
+				return "", key, strings.TrimSpace(text + "\nNOTE: resource type not found (CRD not installed)."), nil
 			}
-			return string(out), key, err
+			return raw, key, text, err
 		}
 		if insecure && !kubectlInsecure {
 			text = strings.TrimSpace(text + "\nNOTE: executed with --insecure-skip-tls-verify=true.")
 		}
-		ev.Kubectl[key] = text
-		return string(out), key, nil
+		return raw, key, text, nil
+	}
+
+	runWithRetry := func(args ...string) (raw string, key string, text string, err error, retried bool) {
+		raw, key, text, err = execKubectl(kubectlInsecure, args...)
+		if err == nil || kubectlInsecure {
+			return raw, key, text, err, false
+		}
+		if strings.Contains(raw, "x509: certificate signed by unknown authority") {
+			if retryRaw, _, _, retryErr := execKubectl(true, args...); retryErr == nil {
+				// Override the original entry with the successful output to avoid noisy error lists.
+				return retryRaw, key, strings.TrimSpace(truncateForKubectl(retryRaw, 1200) + "\nNOTE: retried with --insecure-skip-tls-verify=true due to x509 unknown authority."), nil, true
+			}
+		}
+		return raw, key, text, err, false
 	}
 
 	run := func(args ...string) {
-		out, key, err := runCapture(kubectlInsecure, args...)
-		if err == nil || kubectlInsecure {
-			if err != nil {
-				ev.Kubectl[key] = strings.TrimSpace(truncateForKubectl(out, 1200) + "\nERROR: " + err.Error())
-			}
+		out, key, text, err, retried := runWithRetry(args...)
+		if err != nil {
+			store(key, strings.TrimSpace(truncateForKubectl(out, 1200)+"\nERROR: "+err.Error()))
 			return
 		}
-		// Retry once with insecure if the error is TLS unknown authority.
-		if strings.Contains(out, "x509: certificate signed by unknown authority") {
-			if retryOut, _, retryErr := runCapture(true, args...); retryErr == nil {
-				// Override the original entry with the successful output to avoid noisy error lists.
-				ev.Kubectl[key] = strings.TrimSpace(truncateForKubectl(retryOut, 1200) + "\nNOTE: retried with --insecure-skip-tls-verify=true due to x509 unknown authority.")
-				ev.Kubectl["kubectl NOTE"] = "Some kubectl calls were retried with --insecure-skip-tls-verify=true due to x509 unknown authority."
-				return
-			}
+		if retried {
+			storeNote("Some kubectl calls were retried with --insecure-skip-tls-verify=true due to x509 unknown authority.")
 		}
-		// Store the original error (single entry per command).
-		ev.Kubectl[key] = strings.TrimSpace(truncateForKubectl(out, 1200) + "\nERROR: " + err.Error())
+		store(key, text)
 	}
 
-	// Keep it small (summary only).
-	// Some kubectl versions don't support --short.
-	run("version", "-o", "yaml")
-	run("get", "nodes", "-o", "wide")
-	run("get", "ns", "--no-headers")
-	// Avoid huge `pods -A` on large clusters; addon detection is done via client-go + CRD checks.
-	run("get", "pods", "-n", "kube-system", "--no-headers")
-
-	runCount := func(outField *int, debug bool, args ...string) {
-		if ev == nil || outField == nil {
+	setInt := func(dst *int, v int) {
+		if dst == nil {
 			return
 		}
-		out, key, err := runCapture(kubectlInsecure, args...)
-		if err != nil && !kubectlInsecure && strings.Contains(out, "x509: certificate signed by unknown authority") {
-			if retryOut, _, retryErr := runCapture(true, args...); retryErr == nil {
-				out = retryOut
-				ev.Kubectl[key] = strings.TrimSpace(truncateForKubectl(retryOut, 1200) + "\nNOTE: retried with --insecure-skip-tls-verify=true due to x509 unknown authority.")
-				ev.Kubectl["kubectl NOTE"] = "Some kubectl calls were retried with --insecure-skip-tls-verify=true due to x509 unknown authority."
-			} else {
-				return
-			}
-		} else if err != nil {
-			ev.Kubectl[key] = strings.TrimSpace(truncateForKubectl(out, 1200) + "\nERROR: " + err.Error())
-			return
-		}
-		text := strings.TrimSpace(out)
-		if text == "" {
-			*outField = 0
-			return
-		}
-		*outField = len(strings.Split(text, "\n"))
-		if debug {
-			// Keep existing entry (already stored) but ensure error info if any.
-		}
+		mu.Lock()
+		*dst = v
+		mu.Unlock()
 	}
+	maxInt := func(dst *int, v int) {
+		if dst == nil {
+			return
+		}
+		mu.Lock()
+		if v > *dst {
+			*dst = v
+		}
+		mu.Unlock()
+	}
+
+	runCount := func(apply func(int), args ...string) {
+		out, key, text, err, retried := runWithRetry(args...)
+		if err != nil {
+			store(key, strings.TrimSpace(truncateForKubectl(out, 1200)+"\nERROR: "+err.Error()))
+			return
+		}
+		if retried {
+			storeNote("Some kubectl calls were retried with --insecure-skip-tls-verify=true due to x509 unknown authority.")
+		}
+		store(key, text)
+		lines := strings.TrimSpace(out)
+		if lines == "" {
+			apply(0)
+			return
+		}
+		apply(len(strings.Split(lines, "\n")))
+	}
+
+	runTasks := func(concurrency int, tasks ...func()) {
+		if concurrency <= 0 {
+			concurrency = 1
+		}
+		sem := make(chan struct{}, concurrency)
+		var wg sync.WaitGroup
+		for _, t := range tasks {
+			t := t
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				select {
+				case sem <- struct{}{}:
+				case <-ctx.Done():
+					return
+				}
+				defer func() { <-sem }()
+				t()
+			}()
+		}
+		wg.Wait()
+	}
+
+	var tasks []func()
+
+	// Keep it small (summary only). Some kubectl versions don't support --short.
+	tasks = append(tasks,
+		func() { run("version", "-o", "yaml") },
+		func() { run("get", "nodes", "-o", "wide") },
+		func() { run("get", "ns", "--no-headers") },
+		// Avoid huge `pods -A` on large clusters; addon detection is done via client-go + CRD checks.
+		func() { run("get", "pods", "-n", "kube-system", "--no-headers") },
+	)
 
 	// CRD-based counts (best-effort; may be 0 if CRD or permission missing).
-	runCount(&ev.PrometheusRuleCount, false, "get", "prometheusrules.monitoring.coreos.com", "-A", "-o", "name")
-	runCount(&ev.ServiceMonitorCount, false, "get", "servicemonitors.monitoring.coreos.com", "-A", "-o", "name")
-	runCount(&ev.PodMonitorCount, false, "get", "podmonitors.monitoring.coreos.com", "-A", "-o", "name")
-	runCount(&ev.VeleroScheduleCount, false, "get", "schedules.velero.io", "-n", "velero", "-o", "name")
-	runCount(&ev.HelmReleaseCount, true, "get", "helmreleases.helm.toolkit.fluxcd.io", "-A", "-o", "name")
-	if ev.HelmReleaseCount == 0 {
-		runCount(&ev.HelmReleaseCount, true, "get", "helmreleases.fluxcd.io", "-A", "-o", "name")
-	}
-	runCount(&ev.UpgradePlanCount, true, "get", "plans.upgrade.cattle.io", "-A", "-o", "name")
-	runCount(&ev.LonghornBackupCount, true, "get", "backups.longhorn.io", "-A", "-o", "name")
-	runCount(&ev.LonghornRestoreCount, true, "get", "restores.longhorn.io", "-A", "-o", "name")
-	runCount(&ev.CertManagerCertificateCount, false, "get", "certificates.cert-manager.io", "-A", "-o", "name")
-	runCount(&ev.CertManagerIssuerCount, false, "get", "issuers.cert-manager.io", "-A", "-o", "name")
-	runCount(&ev.CertManagerClusterIssuerCount, false, "get", "clusterissuers.cert-manager.io", "-o", "name")
-	runCount(&ev.ExternalSecretCount, false, "get", "externalsecrets.external-secrets.io", "-A", "-o", "name")
-	runCount(&ev.SealedSecretCount, false, "get", "sealedsecrets.bitnami.com", "-A", "-o", "name")
+	tasks = append(tasks,
+		func() {
+			runCount(func(n int) { setInt(&ev.PrometheusRuleCount, n) }, "get", "prometheusrules.monitoring.coreos.com", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.ServiceMonitorCount, n) }, "get", "servicemonitors.monitoring.coreos.com", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.PodMonitorCount, n) }, "get", "podmonitors.monitoring.coreos.com", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.VeleroScheduleCount, n) }, "get", "schedules.velero.io", "-n", "velero", "-o", "name")
+		},
+		// Flux HelmRelease CRD group changed across versions; take max across both.
+		func() {
+			runCount(func(n int) { maxInt(&ev.HelmReleaseCount, n) }, "get", "helmreleases.helm.toolkit.fluxcd.io", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { maxInt(&ev.HelmReleaseCount, n) }, "get", "helmreleases.fluxcd.io", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.UpgradePlanCount, n) }, "get", "plans.upgrade.cattle.io", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.LonghornBackupCount, n) }, "get", "backups.longhorn.io", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.LonghornRestoreCount, n) }, "get", "restores.longhorn.io", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.CertManagerCertificateCount, n) }, "get", "certificates.cert-manager.io", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.CertManagerIssuerCount, n) }, "get", "issuers.cert-manager.io", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.CertManagerClusterIssuerCount, n) }, "get", "clusterissuers.cert-manager.io", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.ExternalSecretCount, n) }, "get", "externalsecrets.external-secrets.io", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.SealedSecretCount, n) }, "get", "sealedsecrets.bitnami.com", "-A", "-o", "name")
+		},
+	)
 	// Trivy operator reports
-	runCount(&ev.TrivyReportCount, false, "get", "vulnerabilityreports.aquasecurity.github.io", "-A", "-o", "name")
-	if ev.TrivyReportCount == 0 {
-		runCount(&ev.TrivyReportCount, false, "get", "configauditreports.aquasecurity.github.io", "-A", "-o", "name")
-	}
+	tasks = append(tasks,
+		func() {
+			runCount(func(n int) { maxInt(&ev.TrivyReportCount, n) }, "get", "vulnerabilityreports.aquasecurity.github.io", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { maxInt(&ev.TrivyReportCount, n) }, "get", "configauditreports.aquasecurity.github.io", "-A", "-o", "name")
+		},
+	)
 	// Cilium resources sometimes work better without group suffix depending on kubectl discovery/cache.
-	runCount(&ev.CiliumNetworkPolicyCount, true, "get", "ciliumnetworkpolicies", "-A", "-o", "name")
-	if ev.CiliumNetworkPolicyCount == 0 {
-		runCount(&ev.CiliumNetworkPolicyCount, true, "get", "ciliumnetworkpolicies.cilium.io", "-A", "-o", "name")
-	}
-	runCount(&ev.CiliumClusterwideNetworkPolicyCount, true, "get", "ciliumclusterwidenetworkpolicies", "-o", "name")
-	if ev.CiliumClusterwideNetworkPolicyCount == 0 {
-		runCount(&ev.CiliumClusterwideNetworkPolicyCount, true, "get", "ciliumclusterwidenetworkpolicies.cilium.io", "-o", "name")
-	}
-	runCount(&ev.VeleroBackupCount, false, "get", "backups.velero.io", "-A", "-o", "name")
-	runCount(&ev.VeleroRestoreCount, false, "get", "restores.velero.io", "-A", "-o", "name")
-	if bslRaw, _, err := runCapture(kubectlInsecure, "get", "backupstoragelocations.velero.io", "-n", "velero", "-o", "json"); err == nil {
+	tasks = append(tasks,
+		func() {
+			runCount(func(n int) { maxInt(&ev.CiliumNetworkPolicyCount, n) }, "get", "ciliumnetworkpolicies", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { maxInt(&ev.CiliumNetworkPolicyCount, n) }, "get", "ciliumnetworkpolicies.cilium.io", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { maxInt(&ev.CiliumClusterwideNetworkPolicyCount, n) }, "get", "ciliumclusterwidenetworkpolicies", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { maxInt(&ev.CiliumClusterwideNetworkPolicyCount, n) }, "get", "ciliumclusterwidenetworkpolicies.cilium.io", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.VeleroBackupCount, n) }, "get", "backups.velero.io", "-A", "-o", "name")
+		},
+		func() {
+			runCount(func(n int) { setInt(&ev.VeleroRestoreCount, n) }, "get", "restores.velero.io", "-A", "-o", "name")
+		},
+	)
+
+	tasks = append(tasks, func() {
+		bslRaw, key, text, err, retried := runWithRetry("get", "backupstoragelocations.velero.io", "-n", "velero", "-o", "json")
+		if err != nil {
+			store(key, strings.TrimSpace(truncateForKubectl(bslRaw, 1200)+"\nERROR: "+err.Error()))
+			return
+		}
+		if retried {
+			storeNote("Some kubectl calls were retried with --insecure-skip-tls-verify=true due to x509 unknown authority.")
+		}
+		store(key, text)
+
 		var bsl struct {
 			Items []struct {
 				Spec struct {
@@ -2264,22 +2372,31 @@ func collectKubectlEvidence(ctx context.Context, conn *ClusterConnection, ev *Ma
 				} `json:"spec"`
 			} `json:"items"`
 		}
-		if err := json.Unmarshal([]byte(bslRaw), &bsl); err == nil {
-			ev.VeleroBSLCount = len(bsl.Items)
-			for _, item := range bsl.Items {
-				for _, key := range []string{"kmsKeyId", "kmsCustomerMasterKeyId", "encryption", "kmsProject"} {
-					if val, ok := item.Spec.Config[key]; ok && strings.TrimSpace(val) != "" {
-						ev.VeleroBSLEncrypted = true
-						break
-					}
-				}
-				if ev.VeleroBSLEncrypted {
+		if err := json.Unmarshal([]byte(bslRaw), &bsl); err != nil {
+			return
+		}
+		encrypted := false
+		for _, item := range bsl.Items {
+			for _, k := range []string{"kmsKeyId", "kmsCustomerMasterKeyId", "encryption", "kmsProject"} {
+				if val, ok := item.Spec.Config[k]; ok && strings.TrimSpace(val) != "" {
+					encrypted = true
 					break
 				}
 			}
+			if encrypted {
+				break
+			}
 		}
-	}
-	runCount(&ev.EventCount, false, "get", "events", "-A", "--no-headers")
+		mu.Lock()
+		ev.VeleroBSLCount = len(bsl.Items)
+		ev.VeleroBSLEncrypted = encrypted
+		mu.Unlock()
+	})
+
+	tasks = append(tasks, func() { runCount(func(n int) { setInt(&ev.EventCount, n) }, "get", "events", "-A", "--no-headers") })
+
+	// Keep kubectl load bounded; these calls can be slow on large clusters.
+	runTasks(4, tasks...)
 }
 
 func isKubectlMissingResourceType(out string) bool {
@@ -2337,7 +2454,7 @@ func handleMaturityEvidence(w http.ResponseWriter, r *http.Request) {
 		respondJSONError(w, http.StatusInternalServerError, "Failed to load criteria: "+err.Error())
 		return
 	}
-	ev, err := CollectMaturityEvidence(r.Context(), cluster, conn)
+	ev, err := CollectMaturityEvidenceCached(r.Context(), cluster, conn)
 	if err != nil {
 		respondJSONError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -2356,6 +2473,7 @@ func handleMaturityAnalyze(w http.ResponseWriter, r *http.Request) {
 	if cluster == "" {
 		cluster = "default"
 	}
+	wantPDF := r.URL.Query().Get("pdf") == "true"
 
 	var req MaturityAnalyzeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -2380,20 +2498,45 @@ func handleMaturityAnalyze(w http.ResponseWriter, r *http.Request) {
 			Kubectl:        map[string]string{},
 		}
 	} else {
-		ev, err = CollectMaturityEvidence(r.Context(), cluster, conn)
+		evStart := time.Now()
+		ev, err = CollectMaturityEvidenceCached(r.Context(), cluster, conn)
 		if err != nil {
 			respondJSONError(w, http.StatusInternalServerError, "Failed to collect evidence: "+err.Error())
 			return
 		}
+		log.Printf("maturity evidence collected cluster=%s in=%s", cluster, time.Since(evStart))
 	}
 	ev.InferredScores = InferScoresFromEvidence(doc, ev)
 
-	report, llmMeta, err := EvaluateMaturity(r.Context(), doc, ev, req)
+	llmBudget := time.Duration(envInt("LLM_BUDGET_ANALYZE_SECONDS", 120)) * time.Second
+	llmCtx, cancel := context.WithTimeout(r.Context(), llmBudget)
+	defer cancel()
+	llmStart := time.Now()
+	report, llmMeta, err := EvaluateMaturity(llmCtx, doc, ev, req)
+	prov, model := "", ""
+	if llmMeta != nil {
+		prov, model = llmMeta.Provider, llmMeta.Model
+	}
+	log.Printf("maturity analyze done cluster=%s in=%s llmProvider=%s llmModel=%s", cluster, time.Since(llmStart), prov, model)
 	if err != nil {
 		respondJSONError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	report.LLM = llmMeta
+
+	// Return PDF if requested
+	if wantPDF {
+		pdfBytes, err := GenerateMaturityPDF(doc, report, req, ev)
+		if err != nil {
+			respondJSONError(w, http.StatusInternalServerError, "Failed to generate PDF: "+err.Error())
+			return
+		}
+		w.Header().Set("Content-Type", "application/pdf")
+		w.Header().Set("Content-Disposition", "attachment; filename=maturity-report.pdf")
+		w.Write(pdfBytes)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(report)
 }
@@ -2440,15 +2583,27 @@ func handleMaturityQuestions(w http.ResponseWriter, r *http.Request) {
 			Kubectl:        map[string]string{},
 		}
 	} else {
-		ev, err = CollectMaturityEvidence(r.Context(), cluster, conn)
+		evStart := time.Now()
+		ev, err = CollectMaturityEvidenceCached(r.Context(), cluster, conn)
 		if err != nil {
 			respondJSONError(w, http.StatusInternalServerError, "Failed to collect evidence: "+err.Error())
 			return
 		}
+		log.Printf("maturity evidence collected cluster=%s in=%s", cluster, time.Since(evStart))
 	}
 	ev.InferredScores = InferScoresFromEvidence(doc, ev)
 
-	qs, meta, note := GeneratePrecheckQuestions(r.Context(), doc, ev, req)
+	// OpenRouter free/slow models can regularly exceed 90s; keep this generous by default.
+	llmBudget := time.Duration(envInt("LLM_BUDGET_QUESTIONS_SECONDS", 300)) * time.Second
+	llmCtx, cancel := context.WithTimeout(r.Context(), llmBudget)
+	defer cancel()
+	llmStart := time.Now()
+	qs, meta, note := GeneratePrecheckQuestions(llmCtx, doc, ev, req)
+	prov, model := "", ""
+	if meta != nil {
+		prov, model = meta.Provider, meta.Model
+	}
+	log.Printf("maturity questions done cluster=%s in=%s llmProvider=%s llmModel=%s", cluster, time.Since(llmStart), prov, model)
 	resp := MaturityQuestionsResponse{
 		GeneratedAt: time.Now(),
 		Cluster:     cluster,
@@ -2493,7 +2648,7 @@ func handleMaturityReportPDF(w http.ResponseWriter, r *http.Request) {
 			Kubectl:        map[string]string{},
 		}
 	} else {
-		ev, err = CollectMaturityEvidence(r.Context(), cluster, conn)
+		ev, err = CollectMaturityEvidenceCached(r.Context(), cluster, conn)
 		if err != nil {
 			respondJSONError(w, http.StatusInternalServerError, "Failed to collect evidence: "+err.Error())
 			return
@@ -2508,7 +2663,7 @@ func handleMaturityReportPDF(w http.ResponseWriter, r *http.Request) {
 	}
 	report.LLM = llmMeta
 
-	pdfBytes, err := GenerateMaturityPDF(doc, report, req.Answers)
+	pdfBytes, err := GenerateMaturityPDF(doc, report, req, ev)
 	if err != nil {
 		respondJSONError(w, http.StatusInternalServerError, "Failed to generate PDF: "+err.Error())
 		return

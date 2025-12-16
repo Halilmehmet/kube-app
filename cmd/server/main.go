@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -69,6 +70,48 @@ var clusterManager = &ClusterManager{
 	Clusters: make(map[string]*ClusterConnection),
 }
 
+type statusWriter struct {
+	http.ResponseWriter
+	status int
+	bytes  int64
+}
+
+func (w *statusWriter) WriteHeader(code int) {
+	w.status = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *statusWriter) Write(b []byte) (int, error) {
+	if w.status == 0 {
+		w.status = http.StatusOK
+	}
+	n, err := w.ResponseWriter.Write(b)
+	w.bytes += int64(n)
+	return n, err
+}
+
+var reqSeq uint64
+
+func withRequestLogging(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := atomic.AddUint64(&reqSeq, 1)
+		start := time.Now()
+
+		sw := &statusWriter{ResponseWriter: w}
+		defer func() {
+			if rec := recover(); rec != nil {
+				log.Printf("[req:%d] PANIC %s %s: %v", id, r.Method, r.URL.Path, rec)
+				http.Error(sw, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			d := time.Since(start)
+			log.Printf("[req:%d] %s %s -> %d (%dB) in %s", id, r.Method, r.URL.Path, sw.status, sw.bytes, d.Truncate(time.Millisecond))
+		}()
+
+		next.ServeHTTP(sw, r)
+	})
+}
+
 func main() {
 	var kubeconfig *string
 	var port *string
@@ -88,28 +131,31 @@ func main() {
 	fmt.Println("Connected to Kubernetes cluster 'default'")
 	fmt.Printf("Starting web server on http://localhost:%s\n", *port)
 
+	mux := http.NewServeMux()
+
 	// Serve static files
 	fs := http.FileServer(http.Dir("./web/static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	// Routes
-	http.HandleFunc("/", handleIndex)
-	http.HandleFunc("/api/clusters", handleClusters)
-	http.HandleFunc("/api/cluster/upload", handleClusterUpload)
-	http.HandleFunc("/api/namespaces", handleNamespaces)
-	http.HandleFunc("/api/resources", handleResources)
-	http.HandleFunc("/api/events", handleEvents)
-	http.HandleFunc("/api/topology", handleTopology)
-	http.HandleFunc("/api/resource/yaml", handleResourceYAML)
-	http.HandleFunc("/api/resource/update", handleResourceUpdate)
-	http.HandleFunc("/api/resource/create", handleResourceCreate)
-	http.HandleFunc("/api/maturity/criteria", handleMaturityCriteria)
-	http.HandleFunc("/api/maturity/evidence", handleMaturityEvidence)
-	http.HandleFunc("/api/maturity/questions", handleMaturityQuestions)
-	http.HandleFunc("/api/maturity/analyze", handleMaturityAnalyze)
-	http.HandleFunc("/api/maturity/report/pdf", handleMaturityReportPDF)
+	mux.HandleFunc("/", handleIndex)
+	mux.HandleFunc("/api/clusters", handleClusters)
+	mux.HandleFunc("/api/cluster/upload", handleClusterUpload)
+	mux.HandleFunc("/api/namespaces", handleNamespaces)
+	mux.HandleFunc("/api/resources", handleResources)
+	mux.HandleFunc("/api/events", handleEvents)
+	mux.HandleFunc("/api/topology", handleTopology)
+	mux.HandleFunc("/api/resource/yaml", handleResourceYAML)
+	mux.HandleFunc("/api/resource/update", handleResourceUpdate)
+	mux.HandleFunc("/api/resource/create", handleResourceCreate)
+	mux.HandleFunc("/api/maturity/criteria", handleMaturityCriteria)
+	mux.HandleFunc("/api/maturity/evidence", handleMaturityEvidence)
+	mux.HandleFunc("/api/maturity/questions", handleMaturityQuestions)
+	mux.HandleFunc("/api/maturity/explain", handleMaturityExplain)
+	mux.HandleFunc("/api/maturity/analyze", handleMaturityAnalyze)
+	mux.HandleFunc("/api/maturity/report/pdf", handleMaturityReportPDF)
 
-	log.Fatal(http.ListenAndServe(":"+*port, nil))
+	log.Fatal(http.ListenAndServe(":"+*port, withRequestLogging(mux)))
 }
 
 func loadCluster(name, configPath string) {

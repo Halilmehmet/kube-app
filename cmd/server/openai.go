@@ -64,7 +64,7 @@ func evaluateMaturityWithOpenAI(ctx context.Context, criteria []MaturityCriterio
 
 	promptObj := map[string]any{
 		"targetLevel": strings.TrimSpace(req.TargetLevel),
-		"evidence":    ev,
+		"evidence":    buildEvidenceForLLM(ev),
 		"userNotes":   strings.TrimSpace(req.UserNotes),
 		"userAnswers": req.Answers,
 		"criteria":    criteria,
